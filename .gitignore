@@ -1,0 +1,7 @@
+*.bak
+SuperPanda
+*.o
+moc*
+ui*.h
+*.pro.user
+Makefile
