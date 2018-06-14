@@ -25,10 +25,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES +=\
     main.cpp \
-    Components/magickonfug.cpp
+    Interfaces/configfileeditor.cpp \
+    Components/magickonfug.cpp \
+    Interfaces/exelauncher.cpp
 
 HEADERS  += \
-    Components/magickonfug.h
+    Interfaces/configfileeditor.h \
+    Components/magickonfug.h \
+    Interfaces/exelauncher.h
 
 FORMS    += \
     Components/magickonfug.ui
