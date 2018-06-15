@@ -163,7 +163,7 @@
         </rect>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="pageStartup"/>
        <widget class="QWidget" name="pageHardware">
@@ -460,39 +460,39 @@ See About page of SuperPanda for more details.</string>
       <widget class="QFrame" name="frameStatus">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>20</y>
-         <width>301</width>
+         <width>281</width>
          <height>231</height>
         </rect>
        </property>
        <property name="autoFillBackground">
-        <bool>false</bool>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QFrame{background:rgba(255,255,255,128)}</string>
+        <bool>true</bool>
        </property>
        <widget class="QLabel" name="labelStatus">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>271</width>
-          <height>41</height>
+          <x>0</x>
+          <y>0</y>
+          <width>281</width>
+          <height>151</height>
          </rect>
         </property>
         <property name="styleSheet">
          <string notr="true">QLabel{background:transparent}</string>
         </property>
-        <property name="text">
-         <string>Configuring, please wait...</string>
+        <property name="alignment">
+         <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
         </property>
        </widget>
        <widget class="QProgressBar" name="progressBar">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>135</y>
+          <x>0</x>
+          <y>155</y>
           <width>281</width>
           <height>51</height>
          </rect>

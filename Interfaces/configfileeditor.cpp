@@ -140,8 +140,7 @@ ConfigFileEditor::regexpReplaceLine(const QString& fileName,
     else
         newConfigLine = oldConfigLine;
     newConfigLine.replace(QRegExp(regExp), replace);
-    ConfigFileEditor::replace(fileName, oldConfigLine, newConfigLine);
-    return FileOk;
+    return ConfigFileEditor::replace(fileName, oldConfigLine, newConfigLine);
 }
 
 ConfigFileEditor::FileErrorCode ConfigFileEditor::backupFile(const QString &origin,

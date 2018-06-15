@@ -9,8 +9,11 @@
 #define SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE 4
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
 
+#define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
 #define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
 #define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
+#define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
+#define SPANDA_MGCKF_FILE_GRUB_CONFIG "/boot/grub2/grub.cfg"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -23,8 +26,18 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->frameStatus->hide();
     ui->listWidget->setStyleSheet("background-color: transparent;");
     ui->groupPage->setCurrentIndex(pageGroupCount);
+    ui->buttonBox->setEnabled(false);
 
     loadConfig();
+    for (int i=0; i<pageGroupCount; i++)
+        configPageMoidified[i] = false;
+    for (int i=0; i<configEntryCount; i++)
+        configMoidified[i] = false;
+
+    connect(&exeFile,
+            SIGNAL(finished(ExeLauncher::ExecErrorCode)),
+            this,
+            SLOT(onExeFinished(ExeLauncher::ExecErrorCode)));
 }
 
 MagicKonfug::~MagicKonfug()
@@ -47,7 +60,7 @@ void MagicKonfug::loadConfig()
         expression.setPattern("^DefaultTimeoutStartSec=(\\d+)");
         if (expression.indexIn(configValue) >= 0)
         {
-            intValue = expression.cap(0).toInt();
+            intValue = expression.cap(1).toInt();
             ui->textTimeoutSrvStart->setValue(intValue);
         }
     }
@@ -59,24 +72,38 @@ void MagicKonfug::loadConfig()
         expression.setPattern("^ShutdownWatchdogSec=(\\d+)");
         if (expression.indexIn(configValue) >= 0)
         {
-            intValue = expression.cap(0).toInt();
+            intValue = expression.cap(1).toInt();
             ui->textTimeoutShutdown->setValue(intValue);
         }
     }
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
+                                  "intel_pstate=enable",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        ui->checkTurboFreq->setChecked(!configValue.isEmpty());
+    }
 }
 
-void MagicKonfug::applyConfig(int configIndex)
+bool MagicKonfug::applyConfig(int configIndex)
 {
-    QString configValue;
-    QString fileName;
-    QString backupName;
-    ConfigFileEditor::FileErrorCode errCode;
+    static bool successful;
+    static QString configValue;
+    static QString fileName;
+    static QString backupName;
+    static ConfigFileEditor::FileErrorCode errCode;
+    static QList<QString> tempStringList;
+
+    if (!configMoidified[configIndex])
+        return true;
+
+    successful = false;
     switch (configIndex)
     {
         case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
             fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
             configFile.backupFile(fileName, backupName);
-            configValue = ui->textTimeoutSrvStart->value();
+            configValue = QString::number(ui->textTimeoutSrvStart->value());
             errCode = configFile.regexpReplaceLine(fileName,
                                         "DefaultTimeoutStartSec=",
                                         "#*DefaultTimeoutStartSec=\\w*",
@@ -87,7 +114,7 @@ void MagicKonfug::applyConfig(int configIndex)
                                          "#*DefaultTimeoutStopSec=\\w*",
                                          QString("DefaultTimeoutStopSec=%1s")
                                                  .arg(configValue));
-            testConfigFileError(errCode, fileName);
+            successful = testConfigFileError(errCode, fileName);
 
             fileName = SPANDA_MGCKF_FILE_SYSTEMD_USER;
             configFile.backupFile(fileName, backupName);
@@ -101,19 +128,92 @@ void MagicKonfug::applyConfig(int configIndex)
                                          "#*DefaultTimeoutStopSec=\\w*",
                                          QString("DefaultTimeoutStopSec=%1s")
                                                  .arg(configValue));
-            testConfigFileError(errCode, fileName);
+            successful &= testConfigFileError(errCode, fileName);
             break;
         case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
             fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
-            configValue = ui->textTimeoutShutdown->value();
+            configValue = QString::number(ui->textTimeoutShutdown->value());
             errCode = configFile.regexpReplaceLine(fileName,
                                          "ShutdownWatchdogSec=",
                                          "#*ShutdownWatchdogSec=\\w*",
                                          QString("ShutdownWatchdogSec=%1s")
                                                  .arg(configValue));
-            testConfigFileError(errCode, fileName);
+            successful = testConfigFileError(errCode, fileName);
+            break;
+        case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
+            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
+            configFile.backupFile(fileName, backupName);
+            if (ui->checkTurboFreq->isChecked())
+                errCode = configFile.regexpReplaceLine(fileName,
+                                             "GRUB_CMDLINE_LINUX_DEFAULT=",
+                                             "\"\\n",
+                                             "intel_pstate=enable\"\n");
+            else
+                errCode = configFile.regexpReplaceLine(fileName,
+                                             "GRUB_CMDLINE_LINUX_DEFAULT=",
+                                             "intel_pstate=enable",
+                                             "");
+            if (!testConfigFileError(errCode, fileName))
+                break;
+            tempStringList.clear();
+            tempStringList.append("-o");
+            tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG);
+            if (exeFile.runFile(SPANDA_MGCKF_EXEC_GRUB_UPDATE,
+                                         tempStringList) == ExeLauncher::ExecOk)
+                successful = true;
+            showStatusPage(true);
             break;
         default:;
+    }
+    if (successful)
+        setConfigModified(configIndex, false);
+    return successful;
+}
+
+void MagicKonfug::setConfigModified(int configIndex, bool modified)
+{
+    configMoidified[configIndex] = modified;
+
+    // Update modification state of the related page
+    // Note: the page flag is not set to "false" even when
+    //       all related config entries are set to "false".
+    //       The cleaning of page flag is done in on_buttonBox_clicked()
+    switch (configIndex)
+    {
+        case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
+            setConfigPageModified(1, modified);
+            break;
+        case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
+        case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
+            setConfigPageModified(2, modified);
+            break;
+        default:;
+    }
+}
+
+void MagicKonfug::setConfigPageModified(int pageIndex, bool modified)
+{
+    configPageMoidified[pageIndex] |= modified;
+    if (ui->groupPage->currentIndex() == pageIndex)
+        ui->buttonBox->setEnabled(modified);
+}
+
+void MagicKonfug::showStatusPage(bool pageVisible, QString text)
+{
+    if (pageVisible)
+    {
+        ui->groupPage->hide();
+        ui->frameStatus->show();
+        ui->buttonBox->setEnabled(false);
+        if (text.isEmpty())
+            text = "Processing configuration, please wait...";
+        ui->labelStatus->setText(text);
+    }
+    else
+    {
+        ui->groupPage->show();
+        ui->frameStatus->hide();
+        ui->buttonBox->setEnabled(true);
     }
 }
 
@@ -137,7 +237,6 @@ bool MagicKonfug::testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
     return ret;
 }
 
-
 void MagicKonfug::warnMissingFile(QString fileName, bool aborted)
 {
     if (aborted)
@@ -159,6 +258,47 @@ void MagicKonfug::warnPermission(QString objectName)
     QMessageBox::critical(nullptr, "Permission denied",
                           QString("Cannot continue due to denied access to "
                                   "\n%1").arg(objectName));
+}
+
+void MagicKonfug::warnExecPermission(QString objectName)
+{
+    QMessageBox::critical(nullptr, "Permission denied",
+                          QString("Cannot execute %1.\n"
+                                  "Please make sure that you have the "
+                                  "right permission to do it.")
+                                 .arg(objectName));
+}
+
+void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
+{
+    switch (errCode)
+    {
+        case ExeLauncher::ExecOk:
+            QMessageBox::information(this, "Configuration(s) applied",
+                                     "Finish applying configuration. "
+                                     "You may need to reboot to have them "
+                                     "take effect.");
+            break;
+        case ExeLauncher::FileNotFound:
+            warnMissingFile(exeFile.getExeFilePath(), true);
+            break;
+        case ExeLauncher::NoPermission:
+            warnExecPermission(exeFile.getExeFilePath());
+            break;
+        case ExeLauncher::Crashed:
+        case ExeLauncher::UnknownError:
+        default:
+            QMessageBox::critical(this, "Unknown error occured",
+                                  QString("Magic Panda encountered an exception "
+                                          "when trying to execute program \n%1\n"
+                                          "Exit code: %2\n")
+                                         .arg(exeFile.getCommand())
+                                         .arg(exeFile.getExitCode()));
+    }
+    showStatusPage(false);
+    if (ui->groupPage->currentIndex() < pageGroupCount)
+        ui->buttonBox->setEnabled(
+                        configPageMoidified[ui->groupPage->currentIndex()]);
 }
 
 void MagicKonfug::on_listWidget_clicked(const QModelIndex &index)
@@ -187,34 +327,59 @@ void MagicKonfug::on_buttonExit_clicked()
 void MagicKonfug::on_groupPage_currentChanged(int arg1)
 {
     if (arg1 >= 0 && arg1 < pageGroupCount)
+    {
         ui->buttonBox->show();
+        ui->buttonBox->setEnabled(configPageMoidified[arg1]);
+    }
     else
         ui->buttonBox->hide();
 }
 
 void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
 {
+    static bool applied;
     if (ui->buttonBox->buttonRole(button) ==
                         QDialogButtonBox::ButtonRole::ApplyRole)
     {
-        switch (ui->groupPage->currentIndex())
+        int pageIndex = ui->groupPage->currentIndex();
+        switch (pageIndex)
         {
             case 0: // Startup
                 break;
             case 1: // Hardware
-                applyConfig(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
                 break;
             case 2: // Service
-                applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
-                applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
                 break;
             case 3: // I/O
-                applyConfig(SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE);
                 break;
             case 4: // Disk
-                applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
                 break;
             default:;
         }
+        if (pageIndex < pageGroupCount && applied)
+            configPageMoidified[pageIndex] = false;
     }
+}
+
+void MagicKonfug::on_textTimeoutSrvStart_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
+}
+
+void MagicKonfug::on_textTimeoutShutdown_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
+}
+
+void MagicKonfug::on_checkTurboFreq_toggled(bool checked)
+{
+    Q_UNUSED(checked)
+    setConfigModified(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
 }
