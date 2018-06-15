@@ -9,8 +9,8 @@
 #define SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE 4
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
 
-#define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/home/user/system.conf"
-#define SPANDA_MGCKF_FILE_SYSTEMD_USER "/home/user/user.conf"
+#define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
+#define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -34,71 +34,121 @@ MagicKonfug::~MagicKonfug()
 
 void MagicKonfug::loadConfig()
 {
+    QString configValue;
+    QRegExp expression;
+    int intValue;
+    ConfigFileEditor::FileErrorCode errCode;
 
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
+                                  "DefaultTimeoutStartSec=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        expression.setPattern("^DefaultTimeoutStartSec=(\\d+)");
+        if (expression.indexIn(configValue) >= 0)
+        {
+            intValue = expression.cap(0).toInt();
+            ui->textTimeoutSrvStart->setValue(intValue);
+        }
+    }
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
+                                  "ShutdownWatchdogSec=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        expression.setPattern("^ShutdownWatchdogSec=(\\d+)");
+        if (expression.indexIn(configValue) >= 0)
+        {
+            intValue = expression.cap(0).toInt();
+            ui->textTimeoutShutdown->setValue(intValue);
+        }
+    }
 }
 
 void MagicKonfug::applyConfig(int configIndex)
 {
     QString configValue;
+    QString fileName;
     QString backupName;
+    ConfigFileEditor::FileErrorCode errCode;
     switch (configIndex)
     {
         case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
-            if (!configFile.fileExists(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM))
-            {
-                  warnMissingFile(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM);
-                  break;
-            }
-            if (!configFile.fileExists(SPANDA_MGCKF_FILE_SYSTEMD_USER))
-            {
-                  warnMissingFile(SPANDA_MGCKF_FILE_SYSTEMD_USER);
-                  break;
-            }
-            configFile.backupFile(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM, backupName);
-            configFile.backupFile(SPANDA_MGCKF_FILE_SYSTEMD_USER, backupName);
-            configValue = ui->textTimeoutSrvStart->text();
-            configFile.regexpReplaceLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
+            fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
+            configFile.backupFile(fileName, backupName);
+            configValue = ui->textTimeoutSrvStart->value();
+            errCode = configFile.regexpReplaceLine(fileName,
                                         "DefaultTimeoutStartSec=",
                                         "#*DefaultTimeoutStartSec=\\w*",
                                         QString("DefaultTimeoutStartSec=%1s")
                                                 .arg(configValue));
-            configFile.regexpReplaceLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
+            configFile.regexpReplaceLine(fileName,
                                          "DefaultTimeoutStopSec=",
                                          "#*DefaultTimeoutStopSec=\\w*",
                                          QString("DefaultTimeoutStopSec=%1s")
                                                  .arg(configValue));
-            configFile.regexpReplaceLine(SPANDA_MGCKF_FILE_SYSTEMD_USER,
+            testConfigFileError(errCode, fileName);
+
+            fileName = SPANDA_MGCKF_FILE_SYSTEMD_USER;
+            configFile.backupFile(fileName, backupName);
+            errCode = configFile.regexpReplaceLine(fileName,
                                          "DefaultTimeoutStartSec=",
                                          "#*DefaultTimeoutStartSec=\\w*",
                                          QString("DefaultTimeoutStartSec=%1s")
                                                  .arg(configValue));
-            configFile.regexpReplaceLine(SPANDA_MGCKF_FILE_SYSTEMD_USER,
+            configFile.regexpReplaceLine(fileName,
                                          "DefaultTimeoutStopSec=",
                                          "#*DefaultTimeoutStopSec=\\w*",
                                          QString("DefaultTimeoutStopSec=%1s")
                                                  .arg(configValue));
-            configValue = ui->textTimeoutShutdown->text();
-            configFile.regexpReplaceLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
+            testConfigFileError(errCode, fileName);
+            break;
+        case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
+            fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
+            configValue = ui->textTimeoutShutdown->value();
+            errCode = configFile.regexpReplaceLine(fileName,
                                          "ShutdownWatchdogSec=",
                                          "#*ShutdownWatchdogSec=\\w*",
                                          QString("ShutdownWatchdogSec=%1s")
                                                  .arg(configValue));
+            testConfigFileError(errCode, fileName);
             break;
         default:;
     }
 }
 
+bool MagicKonfug::testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
+                                      const QString& fileName,
+                                      const bool aborted)
+{
+    bool ret = false;
+    switch (errCode)
+    {
+        case ConfigFileEditor::FileOk:
+            ret = true;
+            break;
+        case ConfigFileEditor::FileNotFound:
+            MagicKonfug::warnMissingFile(fileName, aborted);
+        break;
+        case ConfigFileEditor::NoPermission:
+            MagicKonfug::warnPermission(fileName);
+        default:;
+    }
+    return ret;
+}
+
+
 void MagicKonfug::warnMissingFile(QString fileName, bool aborted)
 {
     if (aborted)
     {
-        QMessageBox::critical(this, "Missing file",
+        QMessageBox::critical(nullptr, "Missing file",
                               QString("Cannot continue due to a missing file: "
                                       "\n%1").arg(fileName));
     }
     else
     {
-        QMessageBox::warning(this, "Missing file",
+        QMessageBox::warning(nullptr, "Missing file",
                              QString("File %1 does not exists. We will try to "
                                      "create it if possible.").arg(fileName));
     }
@@ -106,7 +156,7 @@ void MagicKonfug::warnMissingFile(QString fileName, bool aborted)
 
 void MagicKonfug::warnPermission(QString objectName)
 {
-    QMessageBox::critical(this, "Permission denied",
+    QMessageBox::critical(nullptr, "Permission denied",
                           QString("Cannot continue due to denied access to "
                                   "\n%1").arg(objectName));
 }

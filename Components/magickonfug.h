@@ -28,8 +28,11 @@ private:
 
     void loadConfig();
     void applyConfig(int configIndex);
-    void warnMissingFile(QString fileName, bool aborted = false);
-    void warnPermission(QString objectName);
+    static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
+                                    const QString& fileName,
+                                    const bool aborted = true);
+    static void warnMissingFile(QString fileName, bool aborted = false);
+    static void warnPermission(QString objectName);
 
 private slots:
     void on_listWidget_clicked(const QModelIndex &index);
