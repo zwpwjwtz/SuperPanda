@@ -40,6 +40,8 @@ private:
     static void warnMissingFile(QString fileName, bool aborted = false);
     static void warnPermission(QString objectName);
     static void warnExecPermission(QString objectName);
+    static int composeKeyStringToIndex(const QString& str);
+    static QString composeKeyIndexToString(int index);
 
 private slots:
     void onExeFinished(ExeLauncher::ExecErrorCode errCode);
@@ -51,6 +53,7 @@ private slots:
     void on_textTimeoutSrvStart_valueChanged(int arg1);
     void on_textTimeoutShutdown_valueChanged(int arg1);
     void on_checkTurboFreq_toggled(bool checked);
+    void on_comboKeySequence_currentIndexChanged(int index);
 };
 
 #endif // MagicKonfug_H

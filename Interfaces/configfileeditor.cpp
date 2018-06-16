@@ -200,3 +200,17 @@ ConfigFileEditor::FileErrorCode ConfigFileEditor::backupFile(const QString &orig
         return FileOk;
     }
 }
+
+ConfigFileEditor::FileErrorCode
+ConfigFileEditor::append(const QString &fileName, const QString &content)
+{
+    QFile file(fileName);
+    if (!file.exists())
+        return FileNotFound;
+    if (!file.open(QFile::Append))
+        return NoPermission;
+
+    file.write(content.toUtf8());
+    file.close();
+    return FileOk;
+}

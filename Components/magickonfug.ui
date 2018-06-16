@@ -333,15 +333,55 @@
            <bool>true</bool>
           </property>
          </widget>
-         <widget class="QKeySequenceEdit" name="keyComposeKey">
+         <widget class="QComboBox" name="comboKeySequence">
           <property name="geometry">
            <rect>
-            <x>10</x>
+            <x>20</x>
             <y>90</y>
-            <width>281</width>
+            <width>261</width>
             <height>38</height>
            </rect>
           </property>
+          <item>
+           <property name="text">
+            <string>(Disabled)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Right Alt Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Left Win Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Right Win Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Left Ctrl Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Right Ctrl Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Caps Lock Key</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Menu Key</string>
+           </property>
+          </item>
          </widget>
         </widget>
        </widget>

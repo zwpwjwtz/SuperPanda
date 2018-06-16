@@ -6,7 +6,7 @@
 #define SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT 1
 #define SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT 2
 #define SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO 3
-#define SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE 4
+#define SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE 4
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
 
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
@@ -14,6 +14,7 @@
 #define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_GRUB_CONFIG "/boot/grub2/grub.cfg"
+#define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -64,6 +65,7 @@ void MagicKonfug::loadConfig()
             ui->textTimeoutSrvStart->setValue(intValue);
         }
     }
+
     errCode = configFile.findLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
                                   "ShutdownWatchdogSec=",
                                   configValue);
@@ -76,6 +78,7 @@ void MagicKonfug::loadConfig()
             ui->textTimeoutShutdown->setValue(intValue);
         }
     }
+
     errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
                                   "intel_pstate=enable",
                                   configValue);
@@ -83,11 +86,29 @@ void MagicKonfug::loadConfig()
     {
         ui->checkTurboFreq->setChecked(!configValue.isEmpty());
     }
+
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_KEYBD_DEFAULT,
+                                  "XKBOPTIONS=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        expression.setPattern("compose:(\\w+)");
+        if (expression.indexIn(configValue) >= 0)
+            configValue = expression.cap(1);
+        ui->comboKeySequence->setCurrentIndex(
+                                    composeKeyStringToIndex(configValue));
+    }
+    else
+    {
+        ui->comboKeySequence->setEnabled(false);
+        ui->comboKeySequence->setToolTip("Not supported on your system.");
+    }
 }
 
 bool MagicKonfug::applyConfig(int configIndex)
 {
     static bool successful;
+    static bool valueExists;
     static QString configValue;
     static QString fileName;
     static QString backupName;
@@ -132,6 +153,7 @@ bool MagicKonfug::applyConfig(int configIndex)
             break;
         case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
             fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
+            configFile.backupFile(fileName, backupName);
             configValue = QString::number(ui->textTimeoutShutdown->value());
             errCode = configFile.regexpReplaceLine(fileName,
                                          "ShutdownWatchdogSec=",
@@ -147,11 +169,11 @@ bool MagicKonfug::applyConfig(int configIndex)
                 errCode = configFile.regexpReplaceLine(fileName,
                                              "GRUB_CMDLINE_LINUX_DEFAULT=",
                                              "\"\\n",
-                                             "intel_pstate=enable\"\n");
+                                             " intel_pstate=enable\"\n");
             else
                 errCode = configFile.regexpReplaceLine(fileName,
                                              "GRUB_CMDLINE_LINUX_DEFAULT=",
-                                             "intel_pstate=enable",
+                                             "\\s*intel_pstate=enable",
                                              "");
             if (!testConfigFileError(errCode, fileName))
                 break;
@@ -162,6 +184,32 @@ bool MagicKonfug::applyConfig(int configIndex)
                                          tempStringList) == ExeLauncher::ExecOk)
                 successful = true;
             showStatusPage(true);
+            break;
+            case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
+                fileName = SPANDA_MGCKF_FILE_KEYBD_DEFAULT;
+                configFile.backupFile(fileName, backupName);
+                configValue = composeKeyIndexToString(
+                                        ui->comboKeySequence->currentIndex());
+                if (!configValue.isEmpty())
+                    configValue.prepend("compose:");
+                configFile.exists(fileName, "XKBOPTIONS", valueExists);
+                if (valueExists)
+                {
+                    errCode = configFile.regexpReplaceLine(fileName,
+                                            "XKBOPTIONS=",
+                                            "\\s*compose:\\w*",
+                                            "");
+                    configFile.regexpReplaceLine(fileName,
+                                            "XKBOPTIONS=",
+                                            "\"\\n",
+                                            QString(" %1\"\n")
+                                                   .arg(configValue));
+                }
+                else
+                    errCode = configFile.append(fileName,
+                                                QString("XKBOPTIONS=\"%1\"")
+                                                       .arg(configValue));
+                successful = testConfigFileError(errCode, fileName);
             break;
         default:;
     }
@@ -186,6 +234,9 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
         case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
         case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
             setConfigPageModified(2, modified);
+            break;
+        case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
+            setConfigPageModified(3, modified);
             break;
         default:;
     }
@@ -267,6 +318,49 @@ void MagicKonfug::warnExecPermission(QString objectName)
                                   "Please make sure that you have the "
                                   "right permission to do it.")
                                  .arg(objectName));
+}
+
+int MagicKonfug::composeKeyStringToIndex(const QString &str)
+{
+    if (str == "ralt")
+        return 1;
+    else if (str == "lwin")
+        return 2;
+    else if (str == "rwin")
+        return 3;
+    else if (str == "lctrl")
+        return 4;
+    else if (str == "rctrl")
+        return 5;
+    else if (str == "caps")
+        return 6;
+    else if (str == "menu")
+        return 7;
+    else
+        return 0;
+}
+
+QString MagicKonfug::composeKeyIndexToString(int index)
+{
+    switch (index)
+    {
+        case 1: // Right Alt
+            return "ralt";
+        case 2: // Left Win
+            return "lwin";
+        case 3: // Right Win
+            return "rwin";
+        case 4: // Left Ctrl
+            return "lctrl";
+        case 5: // Right Ctrl
+            return "rctrl";
+        case 6: // Caps Lock
+            return "caps";
+        case 7: // Menu
+            return "menu";
+        default:
+            return "";
+    }
 }
 
 void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
@@ -354,7 +448,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
                 break;
             case 3: // I/O
-                applied = applyConfig(SPANDA_MGCKF_CONFIG_IO_KEYBD_COMPOSE);
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
                 break;
             case 4: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
@@ -382,4 +476,10 @@ void MagicKonfug::on_checkTurboFreq_toggled(bool checked)
 {
     Q_UNUSED(checked)
     setConfigModified(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
+}
+
+void MagicKonfug::on_comboKeySequence_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    setConfigModified(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
 }

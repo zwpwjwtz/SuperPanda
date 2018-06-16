@@ -35,6 +35,8 @@ public:
                                            const QString& search,
                                            const QString& expression,
                                            const QString& replace);
+    static FileErrorCode append(const QString& fileName,
+                                const QString& content);
 };
 
 #endif // CONFIGFILEEDITOR_H
