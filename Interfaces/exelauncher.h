@@ -31,6 +31,7 @@ public:
     QString getExeFilePath();
     QByteArray getOutput();
     int getExitCode();
+    static bool fileExecutable(const QString& filePath);
 
 signals:
     void finished(ExeLauncher::ExecErrorCode errCode);

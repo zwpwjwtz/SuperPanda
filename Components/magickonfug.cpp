@@ -10,10 +10,12 @@
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
 
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
+#define SPANDA_MGCKF_EXEC_GRUB_UPDATE2 "/usr/sbin/grub-mkconfig"
 #define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
 #define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_GRUB_CONFIG "/boot/grub2/grub.cfg"
+#define SPANDA_MGCKF_FILE_GRUB_CONFIG2 "/boot/grub/grub.cfg"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
 
 
@@ -177,15 +179,24 @@ bool MagicKonfug::applyConfig(int configIndex)
                                              "");
             if (!testConfigFileError(errCode, fileName))
                 break;
+
+            // Update grub config file using grub-mkconfig
             tempStringList.clear();
             tempStringList.append("-o");
-            tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG);
-            if (exeFile.runFile(SPANDA_MGCKF_EXEC_GRUB_UPDATE,
-                                         tempStringList) == ExeLauncher::ExecOk)
+            if (configFile.fileExists(SPANDA_MGCKF_FILE_GRUB_CONFIG))
+                tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG);
+            else
+                tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG2);
+            if (exeFile.fileExecutable(SPANDA_MGCKF_EXEC_GRUB_UPDATE))
+                fileName = SPANDA_MGCKF_EXEC_GRUB_UPDATE;
+            else
+                fileName = SPANDA_MGCKF_EXEC_GRUB_UPDATE2;
+            if (exeFile.runFile(fileName, tempStringList)
+                            == ExeLauncher::ExecOk)
                 successful = true;
             showStatusPage(true);
             break;
-            case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
+        case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
                 fileName = SPANDA_MGCKF_FILE_KEYBD_DEFAULT;
                 configFile.backupFile(fileName, backupName);
                 configValue = composeKeyIndexToString(

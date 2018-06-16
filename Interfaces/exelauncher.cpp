@@ -1,3 +1,4 @@
+#include <QFileInfo>
 #include "exelauncher.h"
 
 #define SPANDA_EXEC_SHELL_DEFAULT "/bin/bash"
@@ -87,6 +88,12 @@ ExeLauncher::ExecErrorCode ExeLauncher::getErrCode()
         default:
             return UnknownError;
     }
+}
+
+bool ExeLauncher::fileExecutable(const QString &filePath)
+{
+    QFileInfo fileInfo(filePath);
+    return fileInfo.exists() && fileInfo.isExecutable();
 }
 
 void ExeLauncher::onProcessError(QProcess::ProcessError errCode)

@@ -115,6 +115,7 @@ ConfigFileEditor::replace(const QString& fileName,
         file.open(QFile::ReadWrite);
         if (!file.isWritable())
             return NoPermission;
+        file.resize(pos + 1);
         file.seek(pos);
         file.write(replace.toUtf8());
 
