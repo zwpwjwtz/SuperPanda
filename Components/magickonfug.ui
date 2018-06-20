@@ -386,7 +386,7 @@
         </widget>
        </widget>
        <widget class="QWidget" name="pageDisk">
-        <widget class="QComboBox" name="comboBox">
+        <widget class="QComboBox" name="comboDiskType">
          <property name="geometry">
           <rect>
            <x>10</x>

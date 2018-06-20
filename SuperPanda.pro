@@ -27,12 +27,14 @@ SOURCES +=\
     main.cpp \
     Interfaces/configfileeditor.cpp \
     Components/magickonfug.cpp \
-    Interfaces/exelauncher.cpp
+    Interfaces/exelauncher.cpp \
+    Utils/diskutils.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
     Components/magickonfug.h \
-    Interfaces/exelauncher.h
+    Interfaces/exelauncher.h \
+    Utils/diskutils.h
 
 FORMS    += \
     Components/magickonfug.ui

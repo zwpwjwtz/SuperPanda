@@ -28,6 +28,7 @@ private:
     static const int configEntryCount = 6;
     bool configPageMoidified[pageGroupCount];
     bool configMoidified[configEntryCount];
+    bool waitingExec;
 
     void loadConfig();
     bool applyConfig(int configIndex);
@@ -54,6 +55,7 @@ private slots:
     void on_textTimeoutShutdown_valueChanged(int arg1);
     void on_checkTurboFreq_toggled(bool checked);
     void on_comboKeySequence_currentIndexChanged(int index);
+    void on_comboDiskType_currentIndexChanged(const QString &arg1);
 };
 
 #endif // MagicKonfug_H

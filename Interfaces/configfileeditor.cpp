@@ -2,7 +2,7 @@
 #include "configfileeditor.h"
 
 #define SPANDA_IFACE_CONFEDIT_BUFFER_LEN 1024
-#define SPANDA_IFACE_CONFEDIT_BACKUP_MAX 10
+#define SPANDA_IFACE_CONFEDIT_BACKUP_MAX 5
 
 
 ConfigFileEditor::ConfigFileEditor()
@@ -21,6 +21,8 @@ ConfigFileEditor::exists(const QString& fileName,
                          const QString& search,
                          bool& exist)
 {
+    exist = false;
+
     QFile file(fileName);
     if (!file.exists())
         return FileNotFound;
@@ -29,7 +31,6 @@ ConfigFileEditor::exists(const QString& fileName,
 
     QByteArray searchBytes(search.toUtf8());
     QByteArray buffer;
-    exist = false;
     while (!file.atEnd())
     {
         buffer.append(file.read(SPANDA_IFACE_CONFEDIT_BUFFER_LEN));
@@ -49,6 +50,8 @@ ConfigFileEditor::findLine(const QString& fileName,
                            const QString& search,
                            QString& matchedLine)
 {
+    matchedLine.clear();
+
     QFile file(fileName);
     if (!file.exists())
         return FileNotFound;
@@ -58,7 +61,6 @@ ConfigFileEditor::findLine(const QString& fileName,
     QByteArray searchBytes(search.toUtf8());
     QByteArray buffer;
     bool found = false;
-    matchedLine.clear();
     while (!file.atEnd())
     {
         buffer = file.readLine();
@@ -115,7 +117,7 @@ ConfigFileEditor::replace(const QString& fileName,
         file.open(QFile::ReadWrite);
         if (!file.isWritable())
             return NoPermission;
-        file.resize(pos + 1);
+        file.resize(pos);
         file.seek(pos);
         file.write(replace.toUtf8());
 
@@ -206,8 +208,6 @@ ConfigFileEditor::FileErrorCode
 ConfigFileEditor::append(const QString &fileName, const QString &content)
 {
     QFile file(fileName);
-    if (!file.exists())
-        return FileNotFound;
     if (!file.open(QFile::Append))
         return NoPermission;
 

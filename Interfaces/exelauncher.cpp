@@ -32,21 +32,15 @@ ExeLauncher::runFile(const QString& filePath,
     {
         process.waitForStarted();
         process.waitForFinished();
-        output = process.readAllStandardOutput();
-        errCode = getErrCode();
-        if (errCode != ExecOk)
-            output.append(process.readAllStandardError());
     }
     return errCode;
 }
 
 ExeLauncher::ExecErrorCode
 ExeLauncher::runCommand(const QString& command,
-                        const QList<QString>& arguments,
                         bool synchronous)
 {
-    QStringList args(arguments.join(" "));
-    args.push_front(command);
+    QStringList args(command);
     args.push_front(SPANDA_EXEC_SHELL_ARG_EXEC);
     return runFile(SPANDA_EXEC_SHELL_DEFAULT, args, synchronous);
 }

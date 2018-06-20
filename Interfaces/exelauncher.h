@@ -25,7 +25,6 @@ public:
                           const QList<QString>& arguments,
                           bool synchronous = false);
     ExecErrorCode runCommand(const QString& command,
-                             const QList<QString>& arguments,
                              bool synchronous = false);
     QString getCommand();
     QString getExeFilePath();

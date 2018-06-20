@@ -1,6 +1,7 @@
 ﻿#include <QMessageBox>
 #include "magickonfug.h"
 #include "ui_magickonfug.h"
+#include "../Utils/diskutils.h"
 
 #define SPANDA_MGCKF_CONFIG_NONE 0
 #define SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT 1
@@ -11,12 +12,15 @@
 
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE2 "/usr/sbin/grub-mkconfig"
-#define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
-#define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
+
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_GRUB_CONFIG "/boot/grub2/grub.cfg"
 #define SPANDA_MGCKF_FILE_GRUB_CONFIG2 "/boot/grub/grub.cfg"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
+#define SPANDA_MGCKF_FILE_MOUNT_ROOT "/etc/fstab"
+#define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
+#define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
+#define SPANDA_MGCKF_FILE_UDEV_DISK "/etc/udev/rules.d/95-superpanda.rules"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -36,6 +40,7 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
         configPageMoidified[i] = false;
     for (int i=0; i<configEntryCount; i++)
         configMoidified[i] = false;
+    waitingExec = false;
 
     connect(&exeFile,
             SIGNAL(finished(ExeLauncher::ExecErrorCode)),
@@ -105,6 +110,15 @@ void MagicKonfug::loadConfig()
         ui->comboKeySequence->setEnabled(false);
         ui->comboKeySequence->setToolTip("Not supported on your system.");
     }
+
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_UDEV_DISK,
+                                  "ATTR{queue/rotational}==\"0\"",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        if (configValue.contains("deadline"))
+            ui->comboDiskType->setCurrentIndex(1);
+    }
 }
 
 bool MagicKonfug::applyConfig(int configIndex)
@@ -112,8 +126,10 @@ bool MagicKonfug::applyConfig(int configIndex)
     static bool successful;
     static bool valueExists;
     static QString configValue;
+    static QString oldValue;
     static QString fileName;
     static QString backupName;
+    static QRegExp expression;
     static ConfigFileEditor::FileErrorCode errCode;
     static QList<QString> tempStringList;
 
@@ -193,8 +209,11 @@ bool MagicKonfug::applyConfig(int configIndex)
                 fileName = SPANDA_MGCKF_EXEC_GRUB_UPDATE2;
             if (exeFile.runFile(fileName, tempStringList)
                             == ExeLauncher::ExecOk)
+            {
                 successful = true;
-            showStatusPage(true);
+                waitingExec = true;
+                showStatusPage(true);
+            }
             break;
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
                 fileName = SPANDA_MGCKF_FILE_KEYBD_DEFAULT;
@@ -218,10 +237,71 @@ bool MagicKonfug::applyConfig(int configIndex)
                 }
                 else
                     errCode = configFile.append(fileName,
-                                                QString("XKBOPTIONS=\"%1\"")
+                                                QString("\nXKBOPTIONS=\"%1\"")
                                                        .arg(configValue));
                 successful = testConfigFileError(errCode, fileName);
             break;
+        case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
+            // Get mount entry for the root partition
+            exeFile.runCommand("mount | grep \" on / \"", true);
+            tempStringList = QString(exeFile.getOutput())
+                                    .split(' ').toVector().toList();
+            expression.setPattern("^/dev/([a-zA-Z]+)\\d*");
+            if (expression.indexIn(tempStringList[0]) < 0)
+                break;
+
+            // Set scheduler for disk I/O
+            fileName = SPANDA_MGCKF_FILE_UDEV_DISK;
+            configFile.backupFile(fileName, backupName);
+            configValue.clear();
+            if (ui->comboDiskType->currentIndex() == 1) // Using SSD
+                configValue = QString("ACTION==\"add|change\", "
+                                      "KERNEL==\"%1\", "
+                                      "ATTR{queue/rotational}==\"0\", "
+                                      "ATTR{queue/scheduler}=\"deadline\"")
+                                     .arg(expression.cap(1));
+            configFile.exists(fileName,
+                              QString("KERNEL==\"%1\", ATTR{queue/rotational}")
+                                     .arg(expression.cap(1)),
+                              valueExists);
+            if (valueExists)
+                errCode = configFile.regexpReplaceLine(fileName,
+                                        QString("KERNEL==\"%1\", "
+                                                "ATTR{queue/rotational}")
+                                              .arg(expression.cap(1)),
+                                        ".*", configValue);
+            else
+                errCode = configFile.append(fileName,
+                                            configValue.prepend("\n"));
+            successful = testConfigFileError(errCode, fileName);
+
+            // Adjust mount parameters for root partition
+            fileName = SPANDA_MGCKF_FILE_MOUNT_ROOT;
+            configFile.backupFile(fileName, backupName);
+            configFile.findLine(fileName, tempStringList[0], oldValue);
+            if (oldValue.isEmpty() || oldValue.indexOf(tempStringList[0]) > 0)
+                configFile.findLine(fileName,
+                                    DiskUtils::getUUIDByBlock(
+                                                        tempStringList[0]),
+                                    oldValue);
+            if (ui->comboDiskType->currentIndex() == 1) // Using SSD
+            {
+                configValue = " defaults";
+                if (!oldValue.contains(",discard"))
+                    configValue.append(",discard");
+                if (!oldValue.contains(",noatime"))
+                    configValue.append(",noatime");
+                QString newValue(oldValue);
+                newValue.replace(" defaults", configValue);
+                errCode = configFile.replace(fileName, oldValue, newValue);
+            }
+            else // Using HDD
+            {
+                configFile.regexpReplaceLine(fileName, oldValue,
+                                             ",discard", "");
+            }
+            successful &= testConfigFileError(errCode, fileName);
+        break;
         default:;
     }
     if (successful)
@@ -248,6 +328,9 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
             break;
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
             setConfigPageModified(3, modified);
+            break;
+        case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
+            setConfigPageModified(4, modified);
             break;
         default:;
     }
@@ -376,6 +459,9 @@ QString MagicKonfug::composeKeyIndexToString(int index)
 
 void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
 {
+    if (!waitingExec)
+        return;
+
     switch (errCode)
     {
         case ExeLauncher::ExecOk:
@@ -400,6 +486,7 @@ void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
                                          .arg(exeFile.getCommand())
                                          .arg(exeFile.getExitCode()));
     }
+    waitingExec = false;
     showStatusPage(false);
     if (ui->groupPage->currentIndex() < pageGroupCount)
         ui->buttonBox->setEnabled(
@@ -493,4 +580,10 @@ void MagicKonfug::on_comboKeySequence_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     setConfigModified(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
+}
+
+void MagicKonfug::on_comboDiskType_currentIndexChanged(const QString &arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
 }
