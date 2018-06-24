@@ -43,6 +43,8 @@ private:
     static void warnExecPermission(QString objectName);
     static int composeKeyStringToIndex(const QString& str);
     static QString composeKeyIndexToString(int index);
+    static int bootResolutionStringToIndex(const QString& str);
+    static QString bootResolutionIndexToString(int index);
 
 private slots:
     void onExeFinished(ExeLauncher::ExecErrorCode errCode);
@@ -56,6 +58,8 @@ private slots:
     void on_checkTurboFreq_toggled(bool checked);
     void on_comboKeySequence_currentIndexChanged(int index);
     void on_comboDiskType_currentIndexChanged(const QString &arg1);
+    void on_textTimeoutBoot_valueChanged(int arg1);
+    void on_comboBootResolution_currentIndexChanged(int index);
 };
 
 #endif // MagicKonfug_H

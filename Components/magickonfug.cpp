@@ -9,6 +9,8 @@
 #define SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO 3
 #define SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE 4
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
+#define SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT 6
+#define SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION 7
 
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
 #define SPANDA_MGCKF_EXEC_GRUB_UPDATE2 "/usr/sbin/grub-mkconfig"
@@ -118,6 +120,30 @@ void MagicKonfug::loadConfig()
     {
         if (configValue.contains("deadline"))
             ui->comboDiskType->setCurrentIndex(1);
+    }
+
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
+                                  "GRUB_TIMEOUT=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        if (configValue.at(12) == '=')
+        {
+            configValue = configValue.mid(13);
+            ui->textTimeoutBoot->setValue(configValue.toInt());
+        }
+    }
+
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
+                                  "GRUB_GFXMODE=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        if (configValue.at(12) == '=')
+        {
+            ui->comboBootResolution->setCurrentIndex(
+                                    bootResolutionStringToIndex(configValue));
+        }
     }
 }
 
@@ -252,7 +278,6 @@ bool MagicKonfug::applyConfig(int configIndex)
 
             // Set scheduler for disk I/O
             fileName = SPANDA_MGCKF_FILE_UDEV_DISK;
-            configFile.backupFile(fileName, backupName);
             configValue.clear();
             if (ui->comboDiskType->currentIndex() == 1) // Using SSD
                 configValue = QString("ACTION==\"add|change\", "
@@ -301,7 +326,30 @@ bool MagicKonfug::applyConfig(int configIndex)
                                              ",discard", "");
             }
             successful &= testConfigFileError(errCode, fileName);
-        break;
+            break;
+        case SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT:
+            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
+            configFile.backupFile(fileName, backupName);
+            configValue = QString::number(ui->textTimeoutBoot->value());
+            errCode = configFile.regexpReplaceLine(fileName,
+                                     "GRUB_TIMEOUT=",
+                                     "#*GRUB_TIMEOUT=\\d*",
+                                     QString("GRUB_TIMEOUT=%1")
+                                             .arg(configValue));
+            successful = testConfigFileError(errCode, fileName);
+            break;
+        case SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION:
+            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
+            configFile.backupFile(fileName, backupName);
+            configValue = bootResolutionIndexToString(
+                                    ui->comboBootResolution->currentIndex());
+            errCode = configFile.regexpReplaceLine(fileName,
+                                     "GRUB_GFXMODE=",
+                                     "#*GRUB_GFXMODE=\\w*",
+                                     QString("GRUB_GFXMODE=%1")
+                                             .arg(configValue));
+            successful = testConfigFileError(errCode, fileName);
+            break;
         default:;
     }
     if (successful)
@@ -319,6 +367,10 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
     //       The cleaning of page flag is done in on_buttonBox_clicked()
     switch (configIndex)
     {
+        case SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT:
+        case SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION:
+            setConfigPageModified(0, modified);
+            break;
         case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
             setConfigPageModified(1, modified);
             break;
@@ -457,6 +509,33 @@ QString MagicKonfug::composeKeyIndexToString(int index)
     }
 }
 
+int MagicKonfug::bootResolutionStringToIndex(const QString &str)
+{
+    if (str.contains("640x480"))
+        return 1;
+    else if (str.contains("800x600"))
+        return 2;
+    else if (str.contains("1024x768"))
+        return 3;
+    else
+        return 0;
+}
+
+QString MagicKonfug::bootResolutionIndexToString(int index)
+{
+    switch (index)
+    {
+        case 1:
+            return "640x480";
+        case 2:
+            return "800x600";
+        case 3:
+            return "1024x768";
+        default:
+            return "auto";
+    }
+}
+
 void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
 {
     if (!waitingExec)
@@ -537,13 +616,15 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
         switch (pageIndex)
         {
             case 0: // Startup
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION);
                 break;
             case 1: // Hardware
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
                 break;
             case 2: // Service
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
-                applied = applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
                 break;
             case 3: // I/O
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
@@ -586,4 +667,16 @@ void MagicKonfug::on_comboDiskType_currentIndexChanged(const QString &arg1)
 {
     Q_UNUSED(arg1)
     setConfigModified(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
+}
+
+void MagicKonfug::on_textTimeoutBoot_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT);
+}
+
+void MagicKonfug::on_comboBootResolution_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    setConfigModified(SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION);
 }
