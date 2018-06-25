@@ -28,13 +28,17 @@ SOURCES +=\
     Interfaces/configfileeditor.cpp \
     Components/magickonfug.cpp \
     Interfaces/exelauncher.cpp \
-    Utils/diskutils.cpp
+    Utils/diskutils.cpp \
+    Utils/bootutils.cpp \
+    Utils/dialogutils.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
     Components/magickonfug.h \
     Interfaces/exelauncher.h \
-    Utils/diskutils.h
+    Utils/diskutils.h \
+    Utils/bootutils.h \
+    Utils/dialogutils.h
 
 FORMS    += \
     Components/magickonfug.ui

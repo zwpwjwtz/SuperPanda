@@ -1,6 +1,7 @@
 ﻿#include <QMessageBox>
 #include "magickonfug.h"
 #include "ui_magickonfug.h"
+#include "../Utils/dialogutils.h"
 #include "../Utils/diskutils.h"
 
 #define SPANDA_MGCKF_CONFIG_NONE 0
@@ -12,12 +13,7 @@
 #define SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT 6
 #define SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION 7
 
-#define SPANDA_MGCKF_EXEC_GRUB_UPDATE "/usr/sbin/grub2-mkconfig"
-#define SPANDA_MGCKF_EXEC_GRUB_UPDATE2 "/usr/sbin/grub-mkconfig"
-
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
-#define SPANDA_MGCKF_FILE_GRUB_CONFIG "/boot/grub2/grub.cfg"
-#define SPANDA_MGCKF_FILE_GRUB_CONFIG2 "/boot/grub/grub.cfg"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
 #define SPANDA_MGCKF_FILE_MOUNT_ROOT "/etc/fstab"
 #define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
@@ -42,12 +38,12 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
         configPageMoidified[i] = false;
     for (int i=0; i<configEntryCount; i++)
         configMoidified[i] = false;
-    waitingExec = false;
+    needUpdatingBoot = false;
 
-    connect(&exeFile,
-            SIGNAL(finished(ExeLauncher::ExecErrorCode)),
+    connect(&bootConfig,
+            SIGNAL(commandFinished(bool)),
             this,
-            SLOT(onExeFinished(ExeLauncher::ExecErrorCode)));
+            SLOT(onCommandFinished(bool)));
 }
 
 MagicKonfug::~MagicKonfug()
@@ -158,6 +154,7 @@ bool MagicKonfug::applyConfig(int configIndex)
     static QRegExp expression;
     static ConfigFileEditor::FileErrorCode errCode;
     static QList<QString> tempStringList;
+    static ExeLauncher exeFile;
 
     if (!configMoidified[configIndex])
         return true;
@@ -219,26 +216,10 @@ bool MagicKonfug::applyConfig(int configIndex)
                                              "GRUB_CMDLINE_LINUX_DEFAULT=",
                                              "\\s*intel_pstate=enable",
                                              "");
-            if (!testConfigFileError(errCode, fileName))
-                break;
-
-            // Update grub config file using grub-mkconfig
-            tempStringList.clear();
-            tempStringList.append("-o");
-            if (configFile.fileExists(SPANDA_MGCKF_FILE_GRUB_CONFIG))
-                tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG);
-            else
-                tempStringList.append(SPANDA_MGCKF_FILE_GRUB_CONFIG2);
-            if (exeFile.fileExecutable(SPANDA_MGCKF_EXEC_GRUB_UPDATE))
-                fileName = SPANDA_MGCKF_EXEC_GRUB_UPDATE;
-            else
-                fileName = SPANDA_MGCKF_EXEC_GRUB_UPDATE2;
-            if (exeFile.runFile(fileName, tempStringList)
-                            == ExeLauncher::ExecOk)
+            if (testConfigFileError(errCode, fileName))
             {
+                needUpdatingBoot = true;
                 successful = true;
-                waitingExec = true;
-                showStatusPage(true);
             }
             break;
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
@@ -336,7 +317,12 @@ bool MagicKonfug::applyConfig(int configIndex)
                                      "#*GRUB_TIMEOUT=\\d*",
                                      QString("GRUB_TIMEOUT=%1")
                                              .arg(configValue));
-            successful = testConfigFileError(errCode, fileName);
+
+            if (testConfigFileError(errCode, fileName))
+            {
+                needUpdatingBoot = true;
+                successful = true;
+            }
             break;
         case SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION:
             fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
@@ -348,7 +334,12 @@ bool MagicKonfug::applyConfig(int configIndex)
                                      "#*GRUB_GFXMODE=\\w*",
                                      QString("GRUB_GFXMODE=%1")
                                              .arg(configValue));
-            successful = testConfigFileError(errCode, fileName);
+
+            if (testConfigFileError(errCode, fileName))
+            {
+                needUpdatingBoot = true;
+                successful = true;
+            }
             break;
         default:;
     }
@@ -425,45 +416,13 @@ bool MagicKonfug::testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
             ret = true;
             break;
         case ConfigFileEditor::FileNotFound:
-            MagicKonfug::warnMissingFile(fileName, aborted);
+            DialogUtils::warnMissingFile(fileName, aborted);
         break;
         case ConfigFileEditor::NoPermission:
-            MagicKonfug::warnPermission(fileName);
+            DialogUtils::warnPermission(fileName);
         default:;
     }
     return ret;
-}
-
-void MagicKonfug::warnMissingFile(QString fileName, bool aborted)
-{
-    if (aborted)
-    {
-        QMessageBox::critical(nullptr, "Missing file",
-                              QString("Cannot continue due to a missing file: "
-                                      "\n%1").arg(fileName));
-    }
-    else
-    {
-        QMessageBox::warning(nullptr, "Missing file",
-                             QString("File %1 does not exists. We will try to "
-                                     "create it if possible.").arg(fileName));
-    }
-}
-
-void MagicKonfug::warnPermission(QString objectName)
-{
-    QMessageBox::critical(nullptr, "Permission denied",
-                          QString("Cannot continue due to denied access to "
-                                  "\n%1").arg(objectName));
-}
-
-void MagicKonfug::warnExecPermission(QString objectName)
-{
-    QMessageBox::critical(nullptr, "Permission denied",
-                          QString("Cannot execute %1.\n"
-                                  "Please make sure that you have the "
-                                  "right permission to do it.")
-                                 .arg(objectName));
 }
 
 int MagicKonfug::composeKeyStringToIndex(const QString &str)
@@ -536,36 +495,16 @@ QString MagicKonfug::bootResolutionIndexToString(int index)
     }
 }
 
-void MagicKonfug::onExeFinished(ExeLauncher::ExecErrorCode errCode)
+void MagicKonfug::onCommandFinished(bool successful)
 {
-    if (!waitingExec)
-        return;
-
-    switch (errCode)
+    if (successful)
     {
-        case ExeLauncher::ExecOk:
             QMessageBox::information(this, "Configuration(s) applied",
                                      "Finish applying configuration. "
                                      "You may need to reboot to have them "
                                      "take effect.");
-            break;
-        case ExeLauncher::FileNotFound:
-            warnMissingFile(exeFile.getExeFilePath(), true);
-            break;
-        case ExeLauncher::NoPermission:
-            warnExecPermission(exeFile.getExeFilePath());
-            break;
-        case ExeLauncher::Crashed:
-        case ExeLauncher::UnknownError:
-        default:
-            QMessageBox::critical(this, "Unknown error occured",
-                                  QString("Magic Panda encountered an exception "
-                                          "when trying to execute program \n%1\n"
-                                          "Exit code: %2\n")
-                                         .arg(exeFile.getCommand())
-                                         .arg(exeFile.getExitCode()));
     }
-    waitingExec = false;
+
     showStatusPage(false);
     if (ui->groupPage->currentIndex() < pageGroupCount)
         ui->buttonBox->setEnabled(
@@ -636,6 +575,12 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
         }
         if (pageIndex < pageGroupCount && applied)
             configPageMoidified[pageIndex] = false;
+        if (needUpdatingBoot)
+        {
+            if (bootConfig.updateBootMenu())
+                showStatusPage(true);
+            needUpdatingBoot = false;
+        }
     }
 }
 

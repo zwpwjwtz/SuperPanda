@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "Interfaces/configfileeditor.h"
-#include "Interfaces/exelauncher.h"
+#include "Utils/bootutils.h"
 
 
 class QAbstractButton;
@@ -23,12 +23,12 @@ public:
 private:
     Ui::MagicKonfug *ui;
     ConfigFileEditor configFile;
-    ExeLauncher exeFile;
+    BootUtils bootConfig;
     static const int pageGroupCount = 5;
-    static const int configEntryCount = 6;
+    static const int configEntryCount = 8;
     bool configPageMoidified[pageGroupCount];
     bool configMoidified[configEntryCount];
-    bool waitingExec;
+    bool needUpdatingBoot;
 
     void loadConfig();
     bool applyConfig(int configIndex);
@@ -38,16 +38,13 @@ private:
     static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
                                     const QString& fileName,
                                     const bool aborted = true);
-    static void warnMissingFile(QString fileName, bool aborted = false);
-    static void warnPermission(QString objectName);
-    static void warnExecPermission(QString objectName);
     static int composeKeyStringToIndex(const QString& str);
     static QString composeKeyIndexToString(int index);
     static int bootResolutionStringToIndex(const QString& str);
     static QString bootResolutionIndexToString(int index);
 
 private slots:
-    void onExeFinished(ExeLauncher::ExecErrorCode errCode);
+    void onCommandFinished(bool successful);
     void on_listWidget_clicked(const QModelIndex &index);
     void on_buttonAbout_clicked();
     void on_buttonExit_clicked();
