@@ -1,11 +1,13 @@
 #ifndef DIALOGUTILS_H
 #define DIALOGUTILS_H
 
-#include <QString>
+#include <QCoreApplication>
 
 
 class DialogUtils
 {
+    Q_DECLARE_TR_FUNCTIONS(DialogUtils)
+
 public:
     DialogUtils();
 

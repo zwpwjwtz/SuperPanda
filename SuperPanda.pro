@@ -11,11 +11,16 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = SuperPanda
 TEMPLATE = app
 
+VER_MAJ = 1
+VER_MIN = 0
+VER_PAT = 0
+VERSION = 1.0.0
+
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS
+DEFINES += QT_DEPRECATED_WARNINGS APP_VERSION=\\\"$$VERSION\\\"
 
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -30,7 +35,10 @@ SOURCES +=\
     Interfaces/exelauncher.cpp \
     Utils/diskutils.cpp \
     Utils/bootutils.cpp \
-    Utils/dialogutils.cpp
+    Utils/dialogutils.cpp \
+    mainwindow.cpp \
+    global.cpp \
+    aboutwindow.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -38,10 +46,23 @@ HEADERS  += \
     Interfaces/exelauncher.h \
     Utils/diskutils.h \
     Utils/bootutils.h \
-    Utils/dialogutils.h
+    Utils/dialogutils.h \
+    mainwindow.h \
+    global.h \
+    aboutwindow.h
 
 FORMS    += \
-    Components/magickonfug.ui
+    Components/magickonfug.ui \
+    mainwindow.ui \
+    aboutwindow.ui
 
 RESOURCES += \
-    icons.qrc
+    icons.qrc \
+    translations.qrc \
+
+TRANSLATIONS += \
+    Translations/SuperPanda_fr_FR.ts \
+    Translations/SuperPanda_zh_CN.ts \
+    Translations/SuperPanda_zh_TW.ts
+
+include(translation.pri)

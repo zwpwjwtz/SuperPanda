@@ -20,6 +20,9 @@ public:
     explicit MagicKonfug(QWidget *parent = 0);
     ~MagicKonfug();
 
+protected:
+    void changeEvent(QEvent* event);
+
 private:
     Ui::MagicKonfug *ui;
     ConfigFileEditor configFile;
@@ -34,6 +37,7 @@ private:
     bool applyConfig(int configIndex);
     void setConfigModified(int configIndex, bool modified = true);
     void setConfigPageModified(int pageIndex, bool modified = true);
+    void setWidgetDisabled(QWidget* widget);
     void showStatusPage(bool pageVisible, QString text = QString());
     static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
                                     const QString& fileName,

@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Translations/SuperPanda_zh_TW.qm</file>
+        <file>Translations/SuperPanda_zh_CN.qm</file>
+        <file>Translations/SuperPanda_fr_FR.qm</file>
+    </qresource>
+</RCC>

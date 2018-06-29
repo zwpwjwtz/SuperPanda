@@ -1,4 +1,5 @@
-﻿#include <QMessageBox>
+﻿#include <QDesktopWidget>
+#include <QMessageBox>
 #include "magickonfug.h"
 #include "ui_magickonfug.h"
 #include "../Utils/dialogutils.h"
@@ -28,6 +29,9 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->setupUi(this);
 
     setFixedSize(width(), height());
+    move((QApplication::desktop()->width() - width()) / 2,
+         (QApplication::desktop()->height() - height()) / 2);
+
     ui->frameStatus->hide();
     ui->listWidget->setStyleSheet("background-color: transparent;");
     ui->groupPage->setCurrentIndex(pageGroupCount);
@@ -49,6 +53,12 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
 MagicKonfug::~MagicKonfug()
 {
     delete ui;
+}
+
+void MagicKonfug::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange)
+        ui->retranslateUi(this);
 }
 
 void MagicKonfug::loadConfig()
@@ -104,10 +114,7 @@ void MagicKonfug::loadConfig()
                                     composeKeyStringToIndex(configValue));
     }
     else
-    {
-        ui->comboKeySequence->setEnabled(false);
-        ui->comboKeySequence->setToolTip("Not supported on your system.");
-    }
+        setWidgetDisabled(ui->comboKeySequence);
 
     errCode = configFile.findLine(SPANDA_MGCKF_FILE_UDEV_DISK,
                                   "ATTR{queue/rotational}==\"0\"",
@@ -386,6 +393,12 @@ void MagicKonfug::setConfigPageModified(int pageIndex, bool modified)
         ui->buttonBox->setEnabled(modified);
 }
 
+void MagicKonfug::setWidgetDisabled(QWidget *widget)
+{
+    widget->setEnabled(false);
+    widget->setToolTip(tr("Not supported on your system."));
+}
+
 void MagicKonfug::showStatusPage(bool pageVisible, QString text)
 {
     if (pageVisible)
@@ -394,7 +407,7 @@ void MagicKonfug::showStatusPage(bool pageVisible, QString text)
         ui->frameStatus->show();
         ui->buttonBox->setEnabled(false);
         if (text.isEmpty())
-            text = "Processing configuration, please wait...";
+            text = tr("Processing configuration, please wait...");
         ui->labelStatus->setText(text);
     }
     else
@@ -499,10 +512,11 @@ void MagicKonfug::onCommandFinished(bool successful)
 {
     if (successful)
     {
-            QMessageBox::information(this, "Configuration(s) applied",
-                                     "Finish applying configuration. "
+            QMessageBox::information(this,
+                                     tr("Configuration(s) applied"),
+                                     tr("Finish applying configuration. "
                                      "You may need to reboot to have them "
-                                     "take effect.");
+                                     "take effect."));
     }
 
     showStatusPage(false);
