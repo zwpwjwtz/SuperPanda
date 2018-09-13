@@ -13,6 +13,7 @@
 #define SPANDA_MGCKF_CONFIG_DISK_PHYSICS 5
 #define SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT 6
 #define SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION 7
+#define SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n 8
 
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
@@ -20,6 +21,7 @@
 #define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
 #define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
 #define SPANDA_MGCKF_FILE_UDEV_DISK "/etc/udev/rules.d/95-superpanda.rules"
+#define SPANDA_MGCKF_FILE_MODCONF_IWLWIFI "/etc/modprobe.d/iwlwifi.conf"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -38,11 +40,6 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->buttonBox->setEnabled(false);
 
     loadConfig();
-    for (int i=0; i<pageGroupCount; i++)
-        configPageMoidified[i] = false;
-    for (int i=0; i<configEntryCount; i++)
-        configMoidified[i] = false;
-    needUpdatingBoot = false;
 
     connect(&bootConfig,
             SIGNAL(commandFinished(bool)),
@@ -59,6 +56,12 @@ void MagicKonfug::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
         ui->retranslateUi(this);
+}
+
+void MagicKonfug::showEvent(QShowEvent *event)
+{
+    Q_UNUSED(event)
+    loadConfig();
 }
 
 void MagicKonfug::loadConfig()
@@ -148,6 +151,24 @@ void MagicKonfug::loadConfig()
                                     bootResolutionStringToIndex(configValue));
         }
     }
+
+    errCode = configFile.findLine(SPANDA_MGCKF_FILE_MODCONF_IWLWIFI,
+                                  "11n_disable=",
+                                  configValue);
+    if (errCode == ConfigFileEditor::FileOk)
+    {
+        if (configValue.at(11) == '=')
+        {
+            configValue = configValue.mid(12);
+            ui->checkIWiFi80211n->setChecked(configValue.toInt() == 0);
+        }
+    }
+
+    for (int i=0; i<pageGroupCount; i++)
+        configPageMoidified[i] = false;
+    for (int i=0; i<configEntryCount; i++)
+        configMoidified[i] = false;
+    needUpdatingBoot = false;
 }
 
 bool MagicKonfug::applyConfig(int configIndex)
@@ -348,6 +369,26 @@ bool MagicKonfug::applyConfig(int configIndex)
                 successful = true;
             }
             break;
+        case SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n:
+            fileName = SPANDA_MGCKF_FILE_MODCONF_IWLWIFI;
+            configFile.backupFile(fileName, backupName);
+            if (ui->checkIWiFi80211n->isChecked())
+                configValue = "0";
+            else
+                configValue = "1";
+            configFile.exists(fileName, "11n_disable=", valueExists);
+            if (valueExists)
+                errCode = configFile.regexpReplaceLine(fileName,
+                                     "11n_disable=",
+                                     "11n_disable=\\w*",
+                                     QString("11n_disable=%1")
+                                            .arg(configValue));
+            else
+                errCode = configFile.append(fileName,
+                                     QString("\noptions iwlwifi 11n_disable=%1")
+                                            .arg(configValue));
+            successful = testConfigFileError(errCode, fileName);
+            break;
         default:;
     }
     if (successful)
@@ -365,20 +406,30 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
     //       The cleaning of page flag is done in on_buttonBox_clicked()
     switch (configIndex)
     {
+        // Startup
         case SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT:
         case SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION:
             setConfigPageModified(0, modified);
             break;
+
+        // Hardware
         case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
+        case SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n:
             setConfigPageModified(1, modified);
             break;
+
+        // Service
         case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
         case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
             setConfigPageModified(2, modified);
             break;
+
+        // I/O
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
             setConfigPageModified(3, modified);
             break;
+
+        // Disk
         case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
             setConfigPageModified(4, modified);
             break;
@@ -574,6 +625,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 break;
             case 1: // Hardware
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n);
                 break;
             case 2: // Service
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
@@ -638,4 +690,10 @@ void MagicKonfug::on_comboBootResolution_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     setConfigModified(SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION);
+}
+
+void MagicKonfug::on_checkIWiFi80211n_toggled(bool checked)
+{
+    Q_UNUSED(checked)
+    setConfigModified(SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n);
 }

@@ -128,8 +128,8 @@ Assurez-vous que vous avez le droit de l&apos;accéder.</translation>
     </message>
     <message>
         <location filename="../Components/magickonfug.ui" line="194"/>
-        <location filename="../Components/magickonfug.ui" line="361"/>
-        <location filename="../Components/magickonfug.ui" line="383"/>
+        <location filename="../Components/magickonfug.ui" line="403"/>
+        <location filename="../Components/magickonfug.ui" line="425"/>
         <source> sec.</source>
         <translation> sec.</translation>
     </message>
@@ -169,102 +169,116 @@ Assurez-vous que vous avez le droit de l&apos;accéder.</translation>
         <translation>CPU</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="287"/>
         <source>Enable Turbo Frequency for Inel® processors</source>
+        <translation type="vanished">Activer Turbo Frequency pour les processeurs Intel®</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="287"/>
+        <source>Enable Turbo Frequency for Intel® processors</source>
         <translation>Activer Turbo Frequency pour les processeurs Intel®</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="319"/>
+        <location filename="../Components/magickonfug.ui" line="317"/>
+        <source>WiFi</source>
+        <translation>WiFi</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="329"/>
+        <source>Enable 802.11n for Intel® Wireless LAN adapters</source>
+        <translation>Activer 802.11n pour les cartes réseau sans fil Intel®</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="361"/>
         <source>Set timeout for services:</source>
         <translation>Ajuster le temps libre pour les services :</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="335"/>
+        <location filename="../Components/magickonfug.ui" line="377"/>
         <source>Start/stop:</source>
         <translation>Démarrage/arrêt :</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="348"/>
+        <location filename="../Components/magickonfug.ui" line="390"/>
         <source>Shutdown:</source>
         <translation>Arrêt de machine :</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="410"/>
+        <location filename="../Components/magickonfug.ui" line="452"/>
         <source>Keyboard</source>
         <translation>Clavier</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="422"/>
+        <location filename="../Components/magickonfug.ui" line="464"/>
         <source>Set compose key for inputing special characters:</source>
         <translation>La clé de composition pour des caractères spéciaux :</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="439"/>
+        <location filename="../Components/magickonfug.ui" line="481"/>
         <source>(Disabled)</source>
         <translation>(Indisponible)</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="444"/>
+        <location filename="../Components/magickonfug.ui" line="486"/>
         <source>Right Alt Key</source>
         <translation>Alt droite</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="449"/>
+        <location filename="../Components/magickonfug.ui" line="491"/>
         <source>Left Win Key</source>
         <translation>Win gauche</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="454"/>
+        <location filename="../Components/magickonfug.ui" line="496"/>
         <source>Right Win Key</source>
         <translation>Win droite</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="459"/>
+        <location filename="../Components/magickonfug.ui" line="501"/>
         <source>Left Ctrl Key</source>
         <translation>Ctrl gauche</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="464"/>
+        <location filename="../Components/magickonfug.ui" line="506"/>
         <source>Right Ctrl Key</source>
         <translation>Ctrl droite</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="469"/>
+        <location filename="../Components/magickonfug.ui" line="511"/>
         <source>Caps Lock Key</source>
         <translation>Caps Lock</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="474"/>
+        <location filename="../Components/magickonfug.ui" line="516"/>
         <source>Menu Key</source>
         <translation>Menu</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="492"/>
+        <location filename="../Components/magickonfug.ui" line="534"/>
         <source>Hard disk (HDD)</source>
         <translation>Disque dur (HDD)</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="497"/>
+        <location filename="../Components/magickonfug.ui" line="539"/>
         <source>Solid state disk (SSD)</source>
         <translation>Disque à l&apos;état solide (SSD)</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="511"/>
+        <location filename="../Components/magickonfug.ui" line="553"/>
         <source>Optimize system disk according to its type:</source>
         <translation>Optimiser le disque du système selon sa nature :</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="535"/>
+        <location filename="../Components/magickonfug.ui" line="577"/>
         <source>Welcome to the Magic Konfug world!</source>
         <translation>Bienvenue dans le monde magique de Konfug !</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="551"/>
+        <location filename="../Components/magickonfug.ui" line="593"/>
         <source>This tool helps you tune your system. Just explore it and hope you can get the excellent Konfug!</source>
         <translation>Cet outil vous aide à ajuster les paramètres du système d&apos;explotation. Explorez-le ! Nous vous souhaitons un excellent Konfug.</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="569"/>
+        <location filename="../Components/magickonfug.ui" line="611"/>
         <source>Magic Konfu is a part of SuperPanda, a toolkit designed for customizing Linux system without annoying command lines.
 
 See About page of SuperPanda for more details.</source>
@@ -272,22 +286,22 @@ See About page of SuperPanda for more details.</source>
 Consultez le page « À propos de SuperPanda » pour plus de détails.</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="399"/>
+        <location filename="../Components/magickonfug.cpp" line="450"/>
         <source>Not supported on your system.</source>
         <translation>Non supporté par le système.</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="410"/>
+        <location filename="../Components/magickonfug.cpp" line="461"/>
         <source>Processing configuration, please wait...</source>
         <translation>Configuration du traitement, veuillez patienter ...</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="516"/>
+        <location filename="../Components/magickonfug.cpp" line="567"/>
         <source>Configuration(s) applied</source>
         <translation>Configuration(s) appliquée(s)</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="517"/>
+        <location filename="../Components/magickonfug.cpp" line="568"/>
         <source>Finish applying configuration. You may need to reboot to have them take effect.</source>
         <translation>Nous avons finis les configurations. Veuillez redémarrer pour les activer.</translation>
     </message>

@@ -22,13 +22,14 @@ public:
 
 protected:
     void changeEvent(QEvent* event);
+    void showEvent(QShowEvent* event);
 
 private:
     Ui::MagicKonfug *ui;
     ConfigFileEditor configFile;
     BootUtils bootConfig;
     static const int pageGroupCount = 5;
-    static const int configEntryCount = 8;
+    static const int configEntryCount = 9;
     bool configPageMoidified[pageGroupCount];
     bool configMoidified[configEntryCount];
     bool needUpdatingBoot;
@@ -61,6 +62,7 @@ private slots:
     void on_comboDiskType_currentIndexChanged(const QString &arg1);
     void on_textTimeoutBoot_valueChanged(int arg1);
     void on_comboBootResolution_currentIndexChanged(int index);
+    void on_checkIWiFi80211n_toggled(bool checked);
 };
 
 #endif // MagicKonfug_H

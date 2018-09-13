@@ -128,8 +128,8 @@ Please make sure that you have the right permission to do it.</source>
     </message>
     <message>
         <location filename="../Components/magickonfug.ui" line="194"/>
-        <location filename="../Components/magickonfug.ui" line="361"/>
-        <location filename="../Components/magickonfug.ui" line="383"/>
+        <location filename="../Components/magickonfug.ui" line="403"/>
+        <location filename="../Components/magickonfug.ui" line="425"/>
         <source> sec.</source>
         <translation> 秒</translation>
     </message>
@@ -169,102 +169,116 @@ Please make sure that you have the right permission to do it.</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="287"/>
         <source>Enable Turbo Frequency for Inel® processors</source>
+        <translation type="vanished">为 Inel® 处理器开启动态频率调节功能</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="287"/>
+        <source>Enable Turbo Frequency for Intel® processors</source>
         <translation>为 Inel® 处理器开启动态频率调节功能</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="319"/>
+        <location filename="../Components/magickonfug.ui" line="317"/>
+        <source>WiFi</source>
+        <translation>WiFi</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="329"/>
+        <source>Enable 802.11n for Intel® Wireless LAN adapters</source>
+        <translation>在 Inel® 无线网卡上启用 802.11n 模式</translation>
+    </message>
+    <message>
+        <location filename="../Components/magickonfug.ui" line="361"/>
         <source>Set timeout for services:</source>
         <translation>设置系统服务的等待时间：</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="335"/>
+        <location filename="../Components/magickonfug.ui" line="377"/>
         <source>Start/stop:</source>
         <translation>启动/停止：</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="348"/>
+        <location filename="../Components/magickonfug.ui" line="390"/>
         <source>Shutdown:</source>
         <translation>关机：</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="410"/>
+        <location filename="../Components/magickonfug.ui" line="452"/>
         <source>Keyboard</source>
         <translation>键盘</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="422"/>
+        <location filename="../Components/magickonfug.ui" line="464"/>
         <source>Set compose key for inputing special characters:</source>
         <translation>设置合成键以便输入特殊字符：</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="439"/>
+        <location filename="../Components/magickonfug.ui" line="481"/>
         <source>(Disabled)</source>
         <translation>（禁用）</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="444"/>
+        <location filename="../Components/magickonfug.ui" line="486"/>
         <source>Right Alt Key</source>
         <translation>右Alt</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="449"/>
+        <location filename="../Components/magickonfug.ui" line="491"/>
         <source>Left Win Key</source>
         <translation>左Win</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="454"/>
+        <location filename="../Components/magickonfug.ui" line="496"/>
         <source>Right Win Key</source>
         <translation>右Win</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="459"/>
+        <location filename="../Components/magickonfug.ui" line="501"/>
         <source>Left Ctrl Key</source>
         <translation>左Ctrl</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="464"/>
+        <location filename="../Components/magickonfug.ui" line="506"/>
         <source>Right Ctrl Key</source>
         <translation>右Ctrl</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="469"/>
+        <location filename="../Components/magickonfug.ui" line="511"/>
         <source>Caps Lock Key</source>
         <translation>Caps Lock</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="474"/>
+        <location filename="../Components/magickonfug.ui" line="516"/>
         <source>Menu Key</source>
         <translation>菜单键</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="492"/>
+        <location filename="../Components/magickonfug.ui" line="534"/>
         <source>Hard disk (HDD)</source>
         <translation>机械硬盘（HDD）</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="497"/>
+        <location filename="../Components/magickonfug.ui" line="539"/>
         <source>Solid state disk (SSD)</source>
         <translation>固态硬盘（SSD）</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="511"/>
+        <location filename="../Components/magickonfug.ui" line="553"/>
         <source>Optimize system disk according to its type:</source>
         <translation>选择系统盘属性以便进行优化：</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="535"/>
+        <location filename="../Components/magickonfug.ui" line="577"/>
         <source>Welcome to the Magic Konfug world!</source>
         <translation>欢迎来到超级熊猫的魔法世界！</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="551"/>
+        <location filename="../Components/magickonfug.ui" line="593"/>
         <source>This tool helps you tune your system. Just explore it and hope you can get the excellent Konfug!</source>
         <translation>本工具将帮助您调整系统的各项参数。祝您早日成为 Linux 高手！</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.ui" line="569"/>
+        <location filename="../Components/magickonfug.ui" line="611"/>
         <source>Magic Konfu is a part of SuperPanda, a toolkit designed for customizing Linux system without annoying command lines.
 
 See About page of SuperPanda for more details.</source>
@@ -273,22 +287,22 @@ See About page of SuperPanda for more details.</source>
 请查看 SuperPanda 的“关于”页面以了解更多信息。</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="399"/>
+        <location filename="../Components/magickonfug.cpp" line="450"/>
         <source>Not supported on your system.</source>
         <translation>抱歉，您的系统不支持此功能。</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="410"/>
+        <location filename="../Components/magickonfug.cpp" line="461"/>
         <source>Processing configuration, please wait...</source>
         <translation>正在应用配置，请稍后……</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="516"/>
+        <location filename="../Components/magickonfug.cpp" line="567"/>
         <source>Configuration(s) applied</source>
         <translation>您的更改已保存</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="517"/>
+        <location filename="../Components/magickonfug.cpp" line="568"/>
         <source>Finish applying configuration. You may need to reboot to have them take effect.</source>
         <translation>已保存配置。您可能需要重启电脑以使更改生效。</translation>
     </message>

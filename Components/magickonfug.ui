@@ -279,12 +279,12 @@
            <rect>
             <x>30</x>
             <y>30</y>
-            <width>231</width>
+            <width>261</width>
             <height>61</height>
            </rect>
           </property>
           <property name="text">
-           <string>Enable Turbo Frequency for Inel® processors</string>
+           <string>Enable Turbo Frequency for Intel® processors</string>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
@@ -301,6 +301,51 @@
           </property>
           <property name="text">
            <string/>
+          </property>
+         </widget>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>110</y>
+           <width>301</width>
+           <height>101</height>
+          </rect>
+         </property>
+         <property name="title">
+          <string>WiFi</string>
+         </property>
+         <widget class="QLabel" name="label_14">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>30</y>
+            <width>261</width>
+            <height>71</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Enable 802.11n for Intel® Wireless LAN adapters</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QCheckBox" name="checkIWiFi80211n">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>30</y>
+            <width>31</width>
+            <height>61</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </widget>
