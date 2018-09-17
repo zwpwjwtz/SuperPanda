@@ -94,6 +94,11 @@
          </item>
          <item>
           <property name="text">
+           <string>Application</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>Input/Output</string>
           </property>
          </item>
@@ -435,6 +440,37 @@
          </property>
          <property name="value">
           <number>10</number>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="pageApplication">
+        <widget class="QLabel" name="label_13">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>211</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Environment variables:</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="buttonEnvEdit">
+         <property name="geometry">
+          <rect>
+           <x>220</x>
+           <y>30</y>
+           <width>71</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Edit</string>
          </property>
         </widget>
        </widget>

@@ -4,6 +4,8 @@
 #include "ui_magickonfug.h"
 #include "../Utils/dialogutils.h"
 #include "../Utils/diskutils.h"
+#include "../Utils/environment.h"
+#include "../Widgets/environmentwidget.h"
 
 #define SPANDA_MGCKF_CONFIG_NONE 0
 #define SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT 1
@@ -38,6 +40,7 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->listWidget->setStyleSheet("background-color: transparent;");
     ui->groupPage->setCurrentIndex(pageGroupCount);
     ui->buttonBox->setEnabled(false);
+    envEditor = nullptr;
 
     loadConfig();
 
@@ -56,6 +59,16 @@ void MagicKonfug::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
         ui->retranslateUi(this);
+}
+
+void MagicKonfug::closeEvent(QCloseEvent *event)
+{
+    Q_UNUSED(event)
+    if (envEditor)
+    {
+        envEditor->close();
+        delete envEditor;
+    }
 }
 
 void MagicKonfug::showEvent(QShowEvent *event)
@@ -696,4 +709,18 @@ void MagicKonfug::on_checkIWiFi80211n_toggled(bool checked)
 {
     Q_UNUSED(checked)
     setConfigModified(SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n);
+}
+
+void MagicKonfug::on_buttonEnvEdit_clicked()
+{
+    if (envEditor == nullptr)
+    {
+        envEditor = new EnvironmentWidget(0);
+        envEditor->setWindowTitle(tr("Environment Variable Editor"));
+        envEditor->setBaseEnvironmentText(tr("System Environment"));
+    }
+    Utils::Environment env(Utils::Environment::systemEnvironment());
+    envEditor->setBaseEnvironment(env);
+    envEditor->show();
+    envEditor->move(QCursor::pos());
 }

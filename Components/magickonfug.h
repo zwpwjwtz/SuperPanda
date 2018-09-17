@@ -7,6 +7,7 @@
 
 
 class QAbstractButton;
+class EnvironmentWidget;
 
 namespace Ui {
 class MagicKonfug;
@@ -22,10 +23,12 @@ public:
 
 protected:
     void changeEvent(QEvent* event);
+    void closeEvent(QCloseEvent* event);
     void showEvent(QShowEvent* event);
 
 private:
     Ui::MagicKonfug *ui;
+    EnvironmentWidget* envEditor;
     ConfigFileEditor configFile;
     BootUtils bootConfig;
     static const int pageGroupCount = 5;
@@ -63,6 +66,7 @@ private slots:
     void on_textTimeoutBoot_valueChanged(int arg1);
     void on_comboBootResolution_currentIndexChanged(int index);
     void on_checkIWiFi80211n_toggled(bool checked);
+    void on_buttonEnvEdit_clicked();
 };
 
 #endif // MagicKonfug_H

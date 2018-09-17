@@ -38,7 +38,17 @@ SOURCES +=\
     Utils/dialogutils.cpp \
     mainwindow.cpp \
     global.cpp \
-    aboutwindow.cpp
+    aboutwindow.cpp \
+    Utils/environment.cpp \
+    Utils/environmentmodel.cpp \
+    Utils/hostosinfo.cpp \
+    Utils/qtcassert.cpp \
+    Utils/fileutils.cpp \
+    Utils/savefile.cpp \
+    Widgets/headerviewstretcher.cpp \
+    Widgets/itemviews.cpp \
+    Widgets/environmentdialog.cpp \
+    Widgets/environmentwidget.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -49,7 +59,18 @@ HEADERS  += \
     Utils/dialogutils.h \
     mainwindow.h \
     global.h \
-    aboutwindow.h
+    aboutwindow.h \
+    Utils/environment.h \
+    Utils/environmentmodel.h \
+    Utils/hostosinfo.h \
+    Utils/fileutils.h \
+    Utils/qtcassert.h \
+    Utils/osspecificaspects.h \
+    Utils/savefile.h \
+    Widgets/headerviewstretcher.h \
+    Widgets/itemviews.h \
+    Widgets/environmentdialog.h \
+    Widgets/environmentwidget.h
 
 FORMS    += \
     Components/magickonfug.ui \
