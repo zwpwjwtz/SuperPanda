@@ -146,6 +146,26 @@ ConfigFileEditor::regexpReplaceLine(const QString& fileName,
     return ConfigFileEditor::replace(fileName, oldConfigLine, newConfigLine);
 }
 
+ConfigFileEditor::FileErrorCode
+ConfigFileEditor::regexpWriteLine(const QString& fileName,
+                                  const QString& search,
+                                  const QString& regExp,
+                                  QString replace,
+                                  bool replaceIfExists)
+{
+    bool existed;
+    FileErrorCode errCode = FileOk;
+    exists(fileName, search, existed);
+    if (existed)
+    {
+        if (replaceIfExists)
+            errCode = regexpReplaceLine(fileName, search, regExp, replace);
+    }
+    else
+        errCode = append(fileName, replace.prepend("\n"));
+    return errCode;
+}
+
 ConfigFileEditor::FileErrorCode ConfigFileEditor::backupFile(const QString &origin,
                                                              QString &destination)
 {

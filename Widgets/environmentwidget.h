@@ -54,7 +54,10 @@ public:
 
 signals:
     void userChangesChanged();
-    void detailsVisibleChanged(bool visible);
+    void closing();
+
+protected:
+    void closeEvent(QCloseEvent* event);
 
 private:
     void editEnvironmentButtonClicked();

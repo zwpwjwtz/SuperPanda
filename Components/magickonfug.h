@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "Interfaces/configfileeditor.h"
 #include "Utils/bootutils.h"
+#include "Utils/environment.h"
 
 
 class QAbstractButton;
@@ -27,12 +28,22 @@ protected:
     void showEvent(QShowEvent* event);
 
 private:
+    enum class EnvEditMode
+    {
+        NotEditting = 0,
+        SystemScope = 1,
+        UserScope = 2,
+        Disabled = 255
+    };
+
     Ui::MagicKonfug *ui;
     EnvironmentWidget* envEditor;
     ConfigFileEditor configFile;
     BootUtils bootConfig;
-    static const int pageGroupCount = 5;
-    static const int configEntryCount = 9;
+    QList<Utils::EnvironmentItem> envVarChanges;
+    static const int pageGroupCount = 6;
+    static const int configEntryCount = 11;
+    EnvEditMode currentEnvEditMode;
     bool configPageMoidified[pageGroupCount];
     bool configMoidified[configEntryCount];
     bool needUpdatingBoot;
@@ -42,10 +53,13 @@ private:
     void setConfigModified(int configIndex, bool modified = true);
     void setConfigPageModified(int pageIndex, bool modified = true);
     void setWidgetDisabled(QWidget* widget);
+    void showEnvEditor(bool systemScope = false);
     void showStatusPage(bool pageVisible, QString text = QString());
     static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
                                     const QString& fileName,
                                     const bool aborted = true);
+    static bool writeEnvConfigFile(QString fileName,
+                                   QList<Utils::EnvironmentItem> changes);
     static int composeKeyStringToIndex(const QString& str);
     static QString composeKeyIndexToString(int index);
     static int bootResolutionStringToIndex(const QString& str);
@@ -53,6 +67,8 @@ private:
 
 private slots:
     void onCommandFinished(bool successful);
+    void onEnvEditorClosing();
+
     void on_listWidget_clicked(const QModelIndex &index);
     void on_buttonAbout_clicked();
     void on_buttonExit_clicked();
@@ -66,7 +82,8 @@ private slots:
     void on_textTimeoutBoot_valueChanged(int arg1);
     void on_comboBootResolution_currentIndexChanged(int index);
     void on_checkIWiFi80211n_toggled(bool checked);
-    void on_buttonEnvEdit_clicked();
+    void on_buttonEditSysEnv_clicked();
+    void on_buttonEditUserEnv_clicked();
 };
 
 #endif // MagicKonfug_H

@@ -449,28 +449,41 @@
           <rect>
            <x>10</x>
            <y>20</y>
-           <width>211</width>
+           <width>281</width>
            <height>51</height>
           </rect>
          </property>
          <property name="text">
-          <string>Environment variables:</string>
+          <string>Edit environment variables:</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QPushButton" name="buttonEnvEdit">
+        <widget class="QPushButton" name="buttonEditSysEnv">
          <property name="geometry">
           <rect>
-           <x>220</x>
-           <y>30</y>
-           <width>71</width>
+           <x>20</x>
+           <y>70</y>
+           <width>251</width>
            <height>31</height>
           </rect>
          </property>
          <property name="text">
-          <string>Edit</string>
+          <string>For the whole system</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="buttonEditUserEnv">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>110</y>
+           <width>251</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>For this user only</string>
          </property>
         </widget>
        </widget>

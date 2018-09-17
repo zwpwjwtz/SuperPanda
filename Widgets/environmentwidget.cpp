@@ -137,6 +137,7 @@ EnvironmentWidget::EnvironmentWidget(QWidget *parent, QWidget *additionalDetails
         vbox->addWidget(additionalDetailsWidget);
 
     d->m_summaryText = new QLabel(this);
+    d->m_summaryText->setWordWrap(true);
     vbox->addWidget(d->m_summaryText);
 
     auto horizontalLayout = new QHBoxLayout();
@@ -247,6 +248,12 @@ void EnvironmentWidget::setUserChanges(const QList<Utils::EnvironmentItem> &list
 {
     d->m_model->setUserChanges(list);
     updateSummaryText();
+}
+
+void EnvironmentWidget::closeEvent(QCloseEvent *event)
+{
+    Q_UNUSED(event)
+    emit closing();
 }
 
 void EnvironmentWidget::updateSummaryText()

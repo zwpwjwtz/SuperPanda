@@ -35,6 +35,11 @@ public:
                                            const QString& search,
                                            const QString& expression,
                                            const QString& replace);
+    static FileErrorCode regexpWriteLine(const QString& fileName,
+                                         const QString& search,
+                                         const QString& regExp,
+                                         QString replace,
+                                         bool replaceIfExists = true);
     static FileErrorCode append(const QString& fileName,
                                 const QString& content);
 };

@@ -16,6 +16,8 @@
 #define SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT 6
 #define SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION 7
 #define SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n 8
+#define SPANDA_MGCKF_CONFIG_APP_ENV_SYS 9
+#define SPANDA_MGCKF_CONFIG_APP_ENV_USER 10
 
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
@@ -24,6 +26,8 @@
 #define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
 #define SPANDA_MGCKF_FILE_UDEV_DISK "/etc/udev/rules.d/95-superpanda.rules"
 #define SPANDA_MGCKF_FILE_MODCONF_IWLWIFI "/etc/modprobe.d/iwlwifi.conf"
+#define SPANDA_MGCKF_FILE_ENVIRONMENT_SYS "/etc/environment"
+#define SPANDA_MGCKF_FILE_ENVIRONMENT_USER "~/.xsessionrc"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -41,6 +45,7 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->groupPage->setCurrentIndex(pageGroupCount);
     ui->buttonBox->setEnabled(false);
     envEditor = nullptr;
+    currentEnvEditMode = EnvEditMode::NotEditting;
 
     loadConfig();
 
@@ -402,6 +407,16 @@ bool MagicKonfug::applyConfig(int configIndex)
                                             .arg(configValue));
             successful = testConfigFileError(errCode, fileName);
             break;
+        case SPANDA_MGCKF_CONFIG_APP_ENV_SYS:
+            fileName = SPANDA_MGCKF_FILE_ENVIRONMENT_SYS;
+            configFile.backupFile(fileName, backupName);
+            successful = writeEnvConfigFile(fileName, envVarChanges);
+            break;
+        case SPANDA_MGCKF_CONFIG_APP_ENV_USER:
+            fileName = SPANDA_MGCKF_FILE_ENVIRONMENT_USER;
+            configFile.backupFile(fileName, backupName);
+            successful = writeEnvConfigFile(fileName, envVarChanges);
+            break;
         default:;
     }
     if (successful)
@@ -437,14 +452,20 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
             setConfigPageModified(2, modified);
             break;
 
+        // Application
+        case SPANDA_MGCKF_CONFIG_APP_ENV_SYS:
+        case SPANDA_MGCKF_CONFIG_APP_ENV_USER:
+            setConfigPageModified(3, modified);
+            break;
+
         // I/O
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
-            setConfigPageModified(3, modified);
+            setConfigPageModified(4, modified);
             break;
 
         // Disk
         case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
-            setConfigPageModified(4, modified);
+            setConfigPageModified(5, modified);
             break;
         default:;
     }
@@ -461,6 +482,37 @@ void MagicKonfug::setWidgetDisabled(QWidget *widget)
 {
     widget->setEnabled(false);
     widget->setToolTip(tr("Not supported on your system."));
+}
+
+void MagicKonfug::showEnvEditor(bool systemScope)
+{
+    if (currentEnvEditMode != EnvEditMode::NotEditting)
+        return;
+
+    if (envEditor == nullptr)
+    {
+        envEditor = new EnvironmentWidget(nullptr);
+        envEditor->setWindowTitle(tr("Environment Variable Editor"));
+        connect(envEditor,
+                SIGNAL(closing()),
+                this,
+                SLOT(onEnvEditorClosing()));
+    }
+    if (systemScope)
+    {
+        currentEnvEditMode = EnvEditMode::SystemScope;
+        envEditor->setBaseEnvironmentText(tr("System Environment"));
+    }
+    else
+    {
+        currentEnvEditMode = EnvEditMode::UserScope;
+        envEditor->setBaseEnvironmentText(tr("User Environment"));
+    }
+
+    Utils::Environment env(Utils::Environment::systemEnvironment());
+    envEditor->setBaseEnvironment(env);
+    envEditor->show();
+    envEditor->move(QCursor::pos());
 }
 
 void MagicKonfug::showStatusPage(bool pageVisible, QString text)
@@ -500,6 +552,48 @@ bool MagicKonfug::testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
         default:;
     }
     return ret;
+}
+
+bool MagicKonfug::writeEnvConfigFile(QString fileName,
+                                     QList<Utils::EnvironmentItem> changes)
+{
+    bool successful = true;
+    ConfigFileEditor::FileErrorCode errCode;
+    Utils::FileName filePath = Utils::FileName::fromUserInput(fileName);
+
+    Utils::Environment tempEnv(Utils::Environment::systemEnvironment());
+    for (int i=0; i<changes.count(); i++)
+        changes[i].apply(&tempEnv);
+    changes = Utils::Environment::systemEnvironment().diff(tempEnv, true);
+
+    for (int i=0; i<changes.count(); i++)
+    {
+        // Deal with prepending and appending for certain variables
+        if (changes[i].name == "PATH")
+        switch (changes[i].operation)
+        {
+            case Utils::EnvironmentItem::Prepend:
+                changes[i].value.append(
+                                    QString(":\"$%1\"").arg(changes[i].name));
+                break;
+            case Utils::EnvironmentItem::Append:
+                changes[i].value.prepend(
+                                    QString("\"$%1\":").arg(changes[i].name));
+                break;
+            default:;
+        }
+        errCode = ConfigFileEditor::regexpWriteLine(filePath.toString(),
+                                    QString("%1=").arg(changes[i].name),
+                                    QString("\\s*%1=[^\n]*").arg(changes[i].name),
+                                    QString("%1=%2")
+                                           .arg(changes[i].name)
+                                           .arg(changes[i].value));
+        successful = testConfigFileError(errCode, filePath.toString());
+        if (!successful)
+            break;
+    }
+
+    return successful;
 }
 
 int MagicKonfug::composeKeyStringToIndex(const QString &str)
@@ -589,6 +683,23 @@ void MagicKonfug::onCommandFinished(bool successful)
                         configPageMoidified[ui->groupPage->currentIndex()]);
 }
 
+void MagicKonfug::onEnvEditorClosing()
+{
+    QList<Utils::EnvironmentItem> tempEnvChanges(envEditor->userChanges());
+    bool modified = tempEnvChanges != envVarChanges;
+
+    if (modified)
+    {
+        envVarChanges = tempEnvChanges;
+        if (currentEnvEditMode == EnvEditMode::SystemScope)
+            setConfigModified(SPANDA_MGCKF_CONFIG_APP_ENV_SYS);
+        else
+            setConfigModified(SPANDA_MGCKF_CONFIG_APP_ENV_USER);
+    }
+
+    currentEnvEditMode = EnvEditMode::NotEditting;
+}
+
 void MagicKonfug::on_listWidget_clicked(const QModelIndex &index)
 {
     ui->groupPage->setCurrentIndex(index.row());
@@ -644,10 +755,14 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
                 break;
-            case 3: // I/O
+            case 3: // Application
+                applied = applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_SYS);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_USER);
+                break;
+            case 4: // I/O
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
                 break;
-            case 4: // Disk
+            case 5: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
                 break;
             default:;
@@ -711,16 +826,12 @@ void MagicKonfug::on_checkIWiFi80211n_toggled(bool checked)
     setConfigModified(SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n);
 }
 
-void MagicKonfug::on_buttonEnvEdit_clicked()
+void MagicKonfug::on_buttonEditSysEnv_clicked()
 {
-    if (envEditor == nullptr)
-    {
-        envEditor = new EnvironmentWidget(0);
-        envEditor->setWindowTitle(tr("Environment Variable Editor"));
-        envEditor->setBaseEnvironmentText(tr("System Environment"));
-    }
-    Utils::Environment env(Utils::Environment::systemEnvironment());
-    envEditor->setBaseEnvironment(env);
-    envEditor->show();
-    envEditor->move(QCursor::pos());
+    showEnvEditor(true);
+}
+
+void MagicKonfug::on_buttonEditUserEnv_clicked()
+{
+    showEnvEditor(false);
 }
