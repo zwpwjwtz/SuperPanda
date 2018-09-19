@@ -48,7 +48,8 @@ SOURCES +=\
     Widgets/headerviewstretcher.cpp \
     Widgets/itemviews.cpp \
     Widgets/environmentdialog.cpp \
-    Widgets/environmentwidget.cpp
+    Widgets/environmentwidget.cpp \
+    Utils/gsettingseditor.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -70,7 +71,8 @@ HEADERS  += \
     Widgets/headerviewstretcher.h \
     Widgets/itemviews.h \
     Widgets/environmentdialog.h \
-    Widgets/environmentwidget.h
+    Widgets/environmentwidget.h \
+    Utils/gsettingseditor.h
 
 FORMS    += \
     Components/magickonfug.ui \

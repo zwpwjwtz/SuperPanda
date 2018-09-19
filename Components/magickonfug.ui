@@ -171,7 +171,7 @@
         <string notr="true">QGroupBox{background:transparent}</string>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="pageStartup">
         <widget class="QGroupBox" name="groupBox_3">
@@ -488,86 +488,208 @@
         </widget>
        </widget>
        <widget class="QWidget" name="pageIO">
-        <widget class="QGroupBox" name="groupBox_2">
+        <widget class="QTabWidget" name="tabPageIO">
          <property name="geometry">
           <rect>
            <x>0</x>
            <y>0</y>
            <width>301</width>
-           <height>141</height>
+           <height>251</height>
           </rect>
          </property>
-         <property name="styleSheet">
-          <string notr="true">QGroupBox{background:transparent}</string>
+         <property name="currentIndex">
+          <number>0</number>
          </property>
-         <property name="title">
-          <string>Keyboard</string>
-         </property>
-         <widget class="QLabel" name="label_8">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>40</y>
-            <width>281</width>
-            <height>51</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Set compose key for inputing special characters:</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
+         <widget class="QWidget" name="tabKeyboard">
+          <attribute name="title">
+           <string>Keyboard</string>
+          </attribute>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>293</width>
+             <height>141</height>
+            </rect>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QGroupBox{background:transparent}</string>
+           </property>
+           <property name="title">
+            <string>Compose Key</string>
+           </property>
+           <widget class="QLabel" name="label_8">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>281</width>
+              <height>51</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Set compose key for inputing special characters:</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+           <widget class="QComboBox" name="comboKeySequence">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>90</y>
+              <width>261</width>
+              <height>38</height>
+             </rect>
+            </property>
+            <item>
+             <property name="text">
+              <string>(Disabled)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Right Alt Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Left Win Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Right Win Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Left Ctrl Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Right Ctrl Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Caps Lock Key</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Menu Key</string>
+             </property>
+            </item>
+           </widget>
+          </widget>
          </widget>
-         <widget class="QComboBox" name="comboKeySequence">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>90</y>
-            <width>261</width>
-            <height>38</height>
-           </rect>
-          </property>
-          <item>
-           <property name="text">
-            <string>(Disabled)</string>
+         <widget class="QWidget" name="tabDisplay">
+          <attribute name="title">
+           <string>Display</string>
+          </attribute>
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>293</width>
+             <height>151</height>
+            </rect>
            </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Right Alt Key</string>
+           <property name="styleSheet">
+            <string notr="true">QGroupBox{background:transparent}</string>
            </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Left Win Key</string>
+           <property name="title">
+            <string>Screen scaling</string>
            </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Right Win Key</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Left Ctrl Key</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Right Ctrl Key</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Caps Lock Key</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Menu Key</string>
-           </property>
-          </item>
+           <widget class="QLabel" name="label_15">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>281</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Set screen scaling factors:</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label_16">
+            <property name="geometry">
+             <rect>
+              <x>30</x>
+              <y>70</y>
+              <width>141</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Window:</string>
+            </property>
+           </widget>
+           <widget class="QSpinBox" name="textWindowScaling">
+            <property name="geometry">
+             <rect>
+              <x>170</x>
+              <y>67</y>
+              <width>111</width>
+              <height>38</height>
+             </rect>
+            </property>
+            <property name="suffix">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>1</number>
+            </property>
+           </widget>
+           <widget class="QDoubleSpinBox" name="textWindowTextScaling">
+            <property name="geometry">
+             <rect>
+              <x>170</x>
+              <y>107</y>
+              <width>111</width>
+              <height>38</height>
+             </rect>
+            </property>
+            <property name="maximum">
+             <double>3.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.050000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label_17">
+            <property name="geometry">
+             <rect>
+              <x>30</x>
+              <y>110</y>
+              <width>141</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Window text:</string>
+            </property>
+           </widget>
+          </widget>
          </widget>
         </widget>
        </widget>

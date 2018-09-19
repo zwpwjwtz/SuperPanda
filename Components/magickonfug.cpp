@@ -5,6 +5,7 @@
 #include "../Utils/dialogutils.h"
 #include "../Utils/diskutils.h"
 #include "../Utils/environment.h"
+#include "../Utils/gsettingseditor.h"
 #include "../Widgets/environmentwidget.h"
 
 #define SPANDA_MGCKF_CONFIG_NONE 0
@@ -18,6 +19,7 @@
 #define SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n 8
 #define SPANDA_MGCKF_CONFIG_APP_ENV_SYS 9
 #define SPANDA_MGCKF_CONFIG_APP_ENV_USER 10
+#define SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME 11
 
 #define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
 #define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
@@ -28,6 +30,10 @@
 #define SPANDA_MGCKF_FILE_MODCONF_IWLWIFI "/etc/modprobe.d/iwlwifi.conf"
 #define SPANDA_MGCKF_FILE_ENVIRONMENT_SYS "/etc/environment"
 #define SPANDA_MGCKF_FILE_ENVIRONMENT_USER "~/.xsessionrc"
+
+#define SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE "org.gnome.desktop.interface"
+#define SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING "scaling-factor"
+#define SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING "text-scaling-factor"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -43,11 +49,8 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     ui->frameStatus->hide();
     ui->listWidget->setStyleSheet("background-color: transparent;");
     ui->groupPage->setCurrentIndex(pageGroupCount);
-    ui->buttonBox->setEnabled(false);
     envEditor = nullptr;
     currentEnvEditMode = EnvEditMode::NotEditting;
-
-    loadConfig();
 
     connect(&bootConfig,
             SIGNAL(commandFinished(bool)),
@@ -85,6 +88,7 @@ void MagicKonfug::showEvent(QShowEvent *event)
 void MagicKonfug::loadConfig()
 {
     QString configValue;
+    QVariant configVar;
     QRegExp expression;
     int intValue;
     ConfigFileEditor::FileErrorCode errCode;
@@ -182,10 +186,23 @@ void MagicKonfug::loadConfig()
         }
     }
 
+    configVar = GSettingsEditor::getValue(
+                                    SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
+                                    SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING);
+    if (configVar.isValid())
+        ui->textWindowScaling->setValue(configVar.toInt());
+
+    configVar = GSettingsEditor::getValue(
+                                    SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
+                                    SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING);
+    if (configVar.isValid())
+        ui->textWindowTextScaling->setValue(configVar.toDouble());
+
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
     for (int i=0; i<configEntryCount; i++)
         configMoidified[i] = false;
+    ui->buttonBox->setEnabled(false);
     needUpdatingBoot = false;
 }
 
@@ -417,6 +434,16 @@ bool MagicKonfug::applyConfig(int configIndex)
             configFile.backupFile(fileName, backupName);
             successful = writeEnvConfigFile(fileName, envVarChanges);
             break;
+        case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
+            successful =
+                GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
+                                  SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING,
+                                  QVariant(ui->textWindowScaling->value()));
+            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
+                                  SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING,
+                                  QVariant(
+                                    float(ui->textWindowTextScaling->value())));
+            break;
         default:;
     }
     if (successful)
@@ -460,6 +487,7 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
 
         // I/O
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
+        case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
             setConfigPageModified(4, modified);
             break;
 
@@ -761,6 +789,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 break;
             case 4: // I/O
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
                 break;
             case 5: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
@@ -834,4 +863,16 @@ void MagicKonfug::on_buttonEditSysEnv_clicked()
 void MagicKonfug::on_buttonEditUserEnv_clicked()
 {
     showEnvEditor(false);
+}
+
+void MagicKonfug::on_textWindowScaling_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
+}
+
+void MagicKonfug::on_textWindowTextScaling_valueChanged(double arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
 }

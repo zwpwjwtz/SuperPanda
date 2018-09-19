@@ -30,6 +30,7 @@ public:
     QString getExeFilePath();
     QByteArray getOutput();
     int getExitCode();
+    ExecErrorCode getErrCode();
     static bool fileExecutable(const QString& filePath);
 
 signals:
@@ -40,7 +41,6 @@ private:
     QString command;
     QProcess process;
     QByteArray output;
-    ExecErrorCode getErrCode();
 
 private slots:
     void onProcessError(QProcess::ProcessError errCode);

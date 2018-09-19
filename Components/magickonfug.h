@@ -42,7 +42,7 @@ private:
     BootUtils bootConfig;
     QList<Utils::EnvironmentItem> envVarChanges;
     static const int pageGroupCount = 6;
-    static const int configEntryCount = 11;
+    static const int configEntryCount = 12;
     EnvEditMode currentEnvEditMode;
     bool configPageMoidified[pageGroupCount];
     bool configMoidified[configEntryCount];
@@ -84,6 +84,8 @@ private slots:
     void on_checkIWiFi80211n_toggled(bool checked);
     void on_buttonEditSysEnv_clicked();
     void on_buttonEditUserEnv_clicked();
+    void on_textWindowScaling_valueChanged(int arg1);
+    void on_textWindowTextScaling_valueChanged(double arg1);
 };
 
 #endif // MagicKonfug_H
