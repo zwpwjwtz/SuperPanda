@@ -32,6 +32,8 @@
 #define SPANDA_MGCKF_FILE_ENVIRONMENT_USER "~/.xsessionrc"
 
 #define SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE "org.gnome.desktop.interface"
+#define SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME \
+                                    "com.deepin.wrap.gnome.desktop.interface"
 #define SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING "scaling-factor"
 #define SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING "text-scaling-factor"
 
@@ -187,16 +189,22 @@ void MagicKonfug::loadConfig()
     }
 
     configVar = GSettingsEditor::getValue(
+                                    SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
+                                    SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING);
+    if (!configVar.isValid())
+        configVar = GSettingsEditor::getValue(
                                     SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
                                     SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING);
-    if (configVar.isValid())
-        ui->textWindowScaling->setValue(configVar.toInt());
+    ui->textWindowScaling->setValue(configVar.toInt());
 
     configVar = GSettingsEditor::getValue(
                                     SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
                                     SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING);
-    if (configVar.isValid())
-        ui->textWindowTextScaling->setValue(configVar.toDouble());
+    if (!configVar.isValid())
+        configVar = GSettingsEditor::getValue(
+                                    SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
+                                    SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING);
+    ui->textWindowTextScaling->setValue(configVar.toDouble());
 
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
@@ -435,14 +443,21 @@ bool MagicKonfug::applyConfig(int configIndex)
             successful = writeEnvConfigFile(fileName, envVarChanges);
             break;
         case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
-            successful =
-                GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
+	    GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
                                   SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING,
                                   QVariant(ui->textWindowScaling->value()));
             GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
                                   SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING,
                                   QVariant(
                                     float(ui->textWindowTextScaling->value())));
+            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
+                                  SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING,
+                                  QVariant(ui->textWindowScaling->value()));
+            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
+                                  SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING,
+                                  QVariant(
+                                    float(ui->textWindowTextScaling->value())));
+            successful = true;
             break;
         default:;
     }
