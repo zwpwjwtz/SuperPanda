@@ -55,6 +55,7 @@ private:
     void setWidgetDisabled(QWidget* widget);
     void showEnvEditor(bool systemScope = false);
     void showStatusPage(bool pageVisible, QString text = QString());
+    static void destroyWidget(QWidget* widget);
     static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
                                     const QString& fileName,
                                     const bool aborted = true);

@@ -62,23 +62,26 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
 
 MagicKonfug::~MagicKonfug()
 {
+    destroyWidget(envEditor);
     delete ui;
 }
 
 void MagicKonfug::changeEvent(QEvent* event)
 {
     if (event->type() == QEvent::LanguageChange)
+    {
         ui->retranslateUi(this);
+
+        // Some widgets lack retranslateUi() method,
+        // so we just close and destroy them
+        destroyWidget(envEditor);
+        envEditor = nullptr;
+    }
 }
 
 void MagicKonfug::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event)
-    if (envEditor)
-    {
-        envEditor->close();
-        delete envEditor;
-    }
 }
 
 void MagicKonfug::showEvent(QShowEvent *event)
@@ -574,6 +577,15 @@ void MagicKonfug::showStatusPage(bool pageVisible, QString text)
         ui->groupPage->show();
         ui->frameStatus->hide();
         ui->buttonBox->setEnabled(true);
+    }
+}
+
+void MagicKonfug::destroyWidget(QWidget* widget)
+{
+    if (widget)
+    {
+        widget->close();
+        delete widget;
     }
 }
 
