@@ -20,12 +20,16 @@
         <translation>Auteur</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.ui" line="126"/>
         <source>Ver</source>
-        <translation>Ver</translation>
+        <translation type="vanished">Ver</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.cpp" line="12"/>
+        <location filename="../aboutwindow.cpp" line="23"/>
+        <source>Ver: %1</source>
+        <translation>Ver: %1</translation>
+    </message>
+    <message>
+        <location filename="../aboutwindow.cpp" line="24"/>
         <source>Super Panda - Toolkit for tweaking Linux system
 
 This program is a free software.
@@ -43,7 +47,7 @@ Vous pouvez le redistribuer ou le modifier suivant les termes de la GNU General 
 Ce programme est distribué dans l’espoir qu’il sera utile, mais SANS AUCUNE GARANTIE : sans même la garantie implicite de COMMERCIALISABILITÉ, ni d’ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez la GNU General Public License pour plus de détail.</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.cpp" line="22"/>
+        <location filename="../aboutwindow.cpp" line="34"/>
         <source>&lt;p&gt;Project Home: &lt;a href=&quot;https://github.com/zwpwjwtz/SuperPanda&quot;&gt;Github&lt;/a&gt;&lt;p align=&quot;center&quot;&gt;Feel free to report bugs and give suggestions!&lt;/p&gt;</source>
         <translation>&lt;p&gt;Page d&apos;accueil du projet : &lt;a href=&quot;https://github.com/zwpwjwtz/SuperPanda&quot;&gt;Github&lt;/a&gt;&lt;p align=&quot;center&quot;&gt;N&apos;hésitez pas à signaler les bugs et à donner des suggestions!&lt;/p&gt;</translation>
     </message>
@@ -340,7 +344,7 @@ Assurez-vous que vous avez le droit de l&apos;accéder.</translation>
     <message>
         <location filename="../Components/magickonfug.ui" line="619"/>
         <source>Set screen scaling factors:</source>
-        <translation type="unfinished">Facteur de mise à l&apos;échelle :</translation>
+        <translation>Facteur de mise à l&apos;échelle :</translation>
     </message>
     <message>
         <location filename="../Components/magickonfug.ui" line="635"/>
@@ -350,7 +354,7 @@ Assurez-vous que vous avez le droit de l&apos;accéder.</translation>
     <message>
         <location filename="../Components/magickonfug.ui" line="689"/>
         <source>Window text:</source>
-        <translation type="unfinished">Texte :</translation>
+        <translation>Texte :</translation>
     </message>
     <message>
         <location filename="../Components/magickonfug.ui" line="708"/>
@@ -386,37 +390,37 @@ See About page of SuperPanda for more details.</source>
 Consultez le page « À propos de SuperPanda » pour plus de détails.</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="527"/>
+        <location filename="../Components/magickonfug.cpp" line="530"/>
         <source>Not supported on your system.</source>
         <translation>Non supporté par le système.</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="538"/>
+        <location filename="../Components/magickonfug.cpp" line="541"/>
         <source>Environment Variable Editor</source>
         <translation>Éditeur de l&apos;Environnement</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="547"/>
+        <location filename="../Components/magickonfug.cpp" line="550"/>
         <source>System Environment</source>
         <translation>l&apos;environnement du système</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="552"/>
+        <location filename="../Components/magickonfug.cpp" line="555"/>
         <source>User Environment</source>
         <translation>l&apos;environnement de l&apos;utilisateur</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="569"/>
+        <location filename="../Components/magickonfug.cpp" line="572"/>
         <source>Processing configuration, please wait...</source>
         <translation>Configuration du traitement, veuillez patienter ...</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="717"/>
+        <location filename="../Components/magickonfug.cpp" line="729"/>
         <source>Configuration(s) applied</source>
         <translation>Configuration(s) appliquée(s)</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="718"/>
+        <location filename="../Components/magickonfug.cpp" line="730"/>
         <source>Finish applying configuration. You may need to reboot to have them take effect.</source>
         <translation>Nous avons finis les configurations. Veuillez redémarrer pour les activer.</translation>
     </message>

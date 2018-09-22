@@ -20,12 +20,16 @@
         <translation>作者</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.ui" line="126"/>
         <source>Ver</source>
-        <translation>版本</translation>
+        <translation type="vanished">版本</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.cpp" line="12"/>
+        <location filename="../aboutwindow.cpp" line="23"/>
+        <source>Ver: %1</source>
+        <translation type="unfinished">版本: %1</translation>
+    </message>
+    <message>
+        <location filename="../aboutwindow.cpp" line="24"/>
         <source>Super Panda - Toolkit for tweaking Linux system
 
 This program is a free software.
@@ -43,7 +47,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 发布这一程序的目的是希望它能有用，但作者对此不做任何保证。作者也不保证本程序的经济价值，或特定场景下的适用性。请参见GNU通用公共许可证（GPL）的文本以便详细了解相关条款。</translation>
     </message>
     <message>
-        <location filename="../aboutwindow.cpp" line="22"/>
+        <location filename="../aboutwindow.cpp" line="34"/>
         <source>&lt;p&gt;Project Home: &lt;a href=&quot;https://github.com/zwpwjwtz/SuperPanda&quot;&gt;Github&lt;/a&gt;&lt;p align=&quot;center&quot;&gt;Feel free to report bugs and give suggestions!&lt;/p&gt;</source>
         <translation>&lt;p&gt;项目主页：&lt;a href=&quot;https://github.com/zwpwjwtz/SuperPanda&quot;&gt;Github&lt;/a&gt;&lt;p align=&quot;center&quot;&gt;欢迎报告软件错误、反馈意见/建议！&lt;/p&gt;</translation>
     </message>
@@ -387,37 +391,37 @@ See About page of SuperPanda for more details.</source>
 请查看 SuperPanda 的“关于”页面以了解更多信息。</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="527"/>
+        <location filename="../Components/magickonfug.cpp" line="530"/>
         <source>Not supported on your system.</source>
         <translation>抱歉，您的系统不支持此功能。</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="538"/>
+        <location filename="../Components/magickonfug.cpp" line="541"/>
         <source>Environment Variable Editor</source>
         <translation>环境变量编辑器</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="547"/>
+        <location filename="../Components/magickonfug.cpp" line="550"/>
         <source>System Environment</source>
         <translation>系统环境变量</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="552"/>
+        <location filename="../Components/magickonfug.cpp" line="555"/>
         <source>User Environment</source>
         <translation>用户环境变量</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="569"/>
+        <location filename="../Components/magickonfug.cpp" line="572"/>
         <source>Processing configuration, please wait...</source>
         <translation>正在应用配置，请稍后……</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="717"/>
+        <location filename="../Components/magickonfug.cpp" line="729"/>
         <source>Configuration(s) applied</source>
         <translation>您的更改已保存</translation>
     </message>
     <message>
-        <location filename="../Components/magickonfug.cpp" line="718"/>
+        <location filename="../Components/magickonfug.cpp" line="730"/>
         <source>Finish applying configuration. You may need to reboot to have them take effect.</source>
         <translation>已保存配置。您可能需要重启电脑以使更改生效。</translation>
     </message>
