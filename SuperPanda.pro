@@ -89,3 +89,8 @@ TRANSLATIONS += \
     Translations/SuperPanda_zh_TW.ts
 
 include(translation.pri)
+
+
+target.path = $${PREFIX}/bin/
+
+INSTALLS += target
