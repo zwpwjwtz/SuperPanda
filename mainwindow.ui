@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Super Panda</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/Icons/Icons/SuperPanda.png</normaloff>:/Icons/Icons/SuperPanda.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout" stretch="0,20">
     <property name="spacing">

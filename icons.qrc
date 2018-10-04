@@ -4,5 +4,6 @@
         <file>Icons/information.png</file>
         <file>Icons/help.png</file>
         <file>Icons/configure.png</file>
+        <file>Icons/SuperPanda.png</file>
     </qresource>
 </RCC>
