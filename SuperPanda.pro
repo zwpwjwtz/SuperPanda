@@ -49,7 +49,8 @@ SOURCES +=\
     Widgets/itemviews.cpp \
     Widgets/environmentdialog.cpp \
     Widgets/environmentwidget.cpp \
-    Utils/gsettingseditor.cpp
+    Utils/gsettingseditor.cpp \
+    Components/configcollection.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -72,7 +73,11 @@ HEADERS  += \
     Widgets/itemviews.h \
     Widgets/environmentdialog.h \
     Widgets/environmentwidget.h \
-    Utils/gsettingseditor.h
+    Utils/gsettingseditor.h \
+    Components/configcollection.h \
+    Components/configcollection_p.h \
+    Components/config_files.h \
+    Components/config_gconf.h
 
 FORMS    += \
     Components/magickonfug.ui \

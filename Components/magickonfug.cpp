@@ -3,9 +3,6 @@
 #include "magickonfug.h"
 #include "ui_magickonfug.h"
 #include "../Utils/dialogutils.h"
-#include "../Utils/diskutils.h"
-#include "../Utils/environment.h"
-#include "../Utils/gsettingseditor.h"
 #include "../Widgets/environmentwidget.h"
 
 #define SPANDA_MGCKF_CONFIG_NONE 0
@@ -20,22 +17,6 @@
 #define SPANDA_MGCKF_CONFIG_APP_ENV_SYS 9
 #define SPANDA_MGCKF_CONFIG_APP_ENV_USER 10
 #define SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME 11
-
-#define SPANDA_MGCKF_FILE_GRUB_DEFAULT "/etc/default/grub"
-#define SPANDA_MGCKF_FILE_KEYBD_DEFAULT "/etc/default/keyboard"
-#define SPANDA_MGCKF_FILE_MOUNT_ROOT "/etc/fstab"
-#define SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM "/etc/systemd/system.conf"
-#define SPANDA_MGCKF_FILE_SYSTEMD_USER "/etc/systemd/user.conf"
-#define SPANDA_MGCKF_FILE_UDEV_DISK "/etc/udev/rules.d/95-superpanda.rules"
-#define SPANDA_MGCKF_FILE_MODCONF_IWLWIFI "/etc/modprobe.d/iwlwifi.conf"
-#define SPANDA_MGCKF_FILE_ENVIRONMENT_SYS "/etc/environment"
-#define SPANDA_MGCKF_FILE_ENVIRONMENT_USER "~/.xsessionrc"
-
-#define SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE "org.gnome.desktop.interface"
-#define SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME \
-                                    "com.deepin.wrap.gnome.desktop.interface"
-#define SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING "scaling-factor"
-#define SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING "text-scaling-factor"
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -54,10 +35,14 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     envEditor = nullptr;
     currentEnvEditMode = EnvEditMode::NotEditting;
 
-    connect(&bootConfig,
-            SIGNAL(commandFinished(bool)),
+    connect(&configEditor,
+            SIGNAL(configApplied(bool)),
             this,
-            SLOT(onCommandFinished(bool)));
+            SLOT(onConfigEditorApplied(bool)));
+    connect(&configEditor,
+            SIGNAL(promptNeedReboot()),
+            this,
+            SLOT(onConfigEditorPromptReboot()));
 }
 
 MagicKonfug::~MagicKonfug()
@@ -92,387 +77,116 @@ void MagicKonfug::showEvent(QShowEvent *event)
 
 void MagicKonfug::loadConfig()
 {
-    QString configValue;
-    QVariant configVar;
-    QRegExp expression;
-    int intValue;
-    ConfigFileEditor::FileErrorCode errCode;
+    QVariant value;
+    configEditor.loadConfig();
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
-                                  "DefaultTimeoutStartSec=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        expression.setPattern("^DefaultTimeoutStartSec=(\\d+)");
-        if (expression.indexIn(configValue) >= 0)
-        {
-            intValue = expression.cap(1).toInt();
-            ui->textTimeoutSrvStart->setValue(intValue);
-        }
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_SERVICE_TIMEOUT);
+    ui->textTimeoutSrvStart->setValue(value.toInt());
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM,
-                                  "ShutdownWatchdogSec=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        expression.setPattern("^ShutdownWatchdogSec=(\\d+)");
-        if (expression.indexIn(configValue) >= 0)
-        {
-            intValue = expression.cap(1).toInt();
-            ui->textTimeoutShutdown->setValue(intValue);
-        }
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_SHUTDOWN_TIMEOUT);
+    ui->textTimeoutShutdown->setValue(value.toInt());
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
-                                  "intel_pstate=enable",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        ui->checkTurboFreq->setChecked(!configValue.isEmpty());
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_CPU_INTEL_TURBO);
+    ui->checkTurboFreq->setChecked(value.toBool());
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_KEYBD_DEFAULT,
-                                  "XKBOPTIONS=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        expression.setPattern("compose:(\\w+)");
-        if (expression.indexIn(configValue) >= 0)
-            configValue = expression.cap(1);
+    value = configEditor.getValue(ConfigCollection::CONFIG_KEYBD_COMPOSE);
+    ui->comboKeySequence->setCurrentIndex(value.toInt());
+
+    value = configEditor.getValue(ConfigCollection::CONFIG_KEYBD_COMPOSE);
+    if (value.isValid())
         ui->comboKeySequence->setCurrentIndex(
-                                    composeKeyStringToIndex(configValue));
-    }
+                                composeKeyStringToIndex(value.toString()));
     else
         setWidgetDisabled(ui->comboKeySequence);
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_UDEV_DISK,
-                                  "ATTR{queue/rotational}==\"0\"",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        if (configValue.contains("deadline"))
-            ui->comboDiskType->setCurrentIndex(1);
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_DISK_PHYSICS);
+    ui->comboDiskType->setCurrentIndex(value.toInt());
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
-                                  "GRUB_TIMEOUT=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        if (configValue.at(12) == '=')
-        {
-            configValue = configValue.mid(13);
-            ui->textTimeoutBoot->setValue(configValue.toInt());
-        }
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_BOOT_TIMEOUT);
+    ui->textTimeoutBoot->setValue(value.toInt());
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_GRUB_DEFAULT,
-                                  "GRUB_GFXMODE=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        if (configValue.at(12) == '=')
-        {
-            ui->comboBootResolution->setCurrentIndex(
-                                    bootResolutionStringToIndex(configValue));
-        }
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_BOOT_RESOLUTION);
+    ui->comboBootResolution->setCurrentIndex(
+                                bootResolutionStringToIndex(value.toString()));
 
-    errCode = configFile.findLine(SPANDA_MGCKF_FILE_MODCONF_IWLWIFI,
-                                  "11n_disable=",
-                                  configValue);
-    if (errCode == ConfigFileEditor::FileOk)
-    {
-        if (configValue.at(11) == '=')
-        {
-            configValue = configValue.mid(12);
-            ui->checkIWiFi80211n->setChecked(configValue.toInt() == 0);
-        }
-    }
+    value = configEditor.getValue(ConfigCollection::CONFIG_WIFI_INTEL_80211n);
+    ui->checkIWiFi80211n->setChecked(value.toBool());
 
-    configVar = GSettingsEditor::getValue(
-                                    SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
-                                    SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING);
-    if (!configVar.isValid())
-        configVar = GSettingsEditor::getValue(
-                                    SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
-                                    SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING);
-    ui->textWindowScaling->setValue(configVar.toInt());
+    value = configEditor.getValue(
+                            ConfigCollection::CONFIG_DISP_SCALE_GNOME_WINDOW);
+    ui->textWindowScaling->setValue(value.toInt());
 
-    configVar = GSettingsEditor::getValue(
-                                    SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
-                                    SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING);
-    if (!configVar.isValid())
-        configVar = GSettingsEditor::getValue(
-                                    SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
-                                    SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING);
-    ui->textWindowTextScaling->setValue(configVar.toDouble());
+    value = configEditor.getValue(
+                            ConfigCollection::CONFIG_DISP_SCALE_GNOME_TEXT);
+    ui->textWindowTextScaling->setValue(value.toDouble());
 
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
-    for (int i=0; i<configEntryCount; i++)
-        configMoidified[i] = false;
     ui->buttonBox->setEnabled(false);
-    needUpdatingBoot = false;
 }
 
 bool MagicKonfug::applyConfig(int configIndex)
 {
-    static bool successful;
-    static bool valueExists;
-    static QString configValue;
-    static QString oldValue;
-    static QString fileName;
-    static QString backupName;
-    static QRegExp expression;
-    static ConfigFileEditor::FileErrorCode errCode;
-    static QList<QString> tempStringList;
-    static ExeLauncher exeFile;
+    // Set value only.
+    // The real "apply" operation is done in on_buttonBox_clicked()
+    typedef ConfigCollection::ConfigEntryKey Key;
 
-    if (!configMoidified[configIndex])
-        return true;
-
-    successful = false;
+    bool successful;
     switch (configIndex)
     {
         case SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT:
-            fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
-            configFile.backupFile(fileName, backupName);
-            configValue = QString::number(ui->textTimeoutSrvStart->value());
-            errCode = configFile.regexpReplaceLine(fileName,
-                                        "DefaultTimeoutStartSec=",
-                                        "#*DefaultTimeoutStartSec=\\w*",
-                                        QString("DefaultTimeoutStartSec=%1s")
-                                                .arg(configValue));
-            configFile.regexpReplaceLine(fileName,
-                                         "DefaultTimeoutStopSec=",
-                                         "#*DefaultTimeoutStopSec=\\w*",
-                                         QString("DefaultTimeoutStopSec=%1s")
-                                                 .arg(configValue));
-            successful = testConfigFileError(errCode, fileName);
-
-            fileName = SPANDA_MGCKF_FILE_SYSTEMD_USER;
-            configFile.backupFile(fileName, backupName);
-            errCode = configFile.regexpReplaceLine(fileName,
-                                         "DefaultTimeoutStartSec=",
-                                         "#*DefaultTimeoutStartSec=\\w*",
-                                         QString("DefaultTimeoutStartSec=%1s")
-                                                 .arg(configValue));
-            configFile.regexpReplaceLine(fileName,
-                                         "DefaultTimeoutStopSec=",
-                                         "#*DefaultTimeoutStopSec=\\w*",
-                                         QString("DefaultTimeoutStopSec=%1s")
-                                                 .arg(configValue));
-            successful &= testConfigFileError(errCode, fileName);
+            successful = configEditor.setValue(Key::CONFIG_SERVICE_TIMEOUT,
+                                               ui->textTimeoutSrvStart->value());
             break;
         case SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT:
-            fileName = SPANDA_MGCKF_FILE_SYSTEMD_SYSTEM;
-            configFile.backupFile(fileName, backupName);
-            configValue = QString::number(ui->textTimeoutShutdown->value());
-            errCode = configFile.regexpReplaceLine(fileName,
-                                         "ShutdownWatchdogSec=",
-                                         "#*ShutdownWatchdogSec=\\w*",
-                                         QString("ShutdownWatchdogSec=%1s")
-                                                 .arg(configValue));
-            successful = testConfigFileError(errCode, fileName);
+            successful = configEditor.setValue(Key::CONFIG_SHUTDOWN_TIMEOUT,
+                                               ui->textTimeoutShutdown->value());
             break;
         case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
-            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
-            configFile.backupFile(fileName, backupName);
-            if (ui->checkTurboFreq->isChecked())
-                errCode = configFile.regexpReplaceLine(fileName,
-                                             "GRUB_CMDLINE_LINUX_DEFAULT=",
-                                             "\"\\n",
-                                             " intel_pstate=enable\"\n");
-            else
-                errCode = configFile.regexpReplaceLine(fileName,
-                                             "GRUB_CMDLINE_LINUX_DEFAULT=",
-                                             "\\s*intel_pstate=enable",
-                                             "");
-            if (testConfigFileError(errCode, fileName))
-            {
-                needUpdatingBoot = true;
-                successful = true;
-            }
+            successful = configEditor.setValue(Key::CONFIG_CPU_INTEL_TURBO,
+                                               ui->checkTurboFreq->isChecked());
             break;
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
-                fileName = SPANDA_MGCKF_FILE_KEYBD_DEFAULT;
-                configFile.backupFile(fileName, backupName);
-                configValue = composeKeyIndexToString(
-                                        ui->comboKeySequence->currentIndex());
-                if (!configValue.isEmpty())
-                    configValue.prepend("compose:");
-                configFile.exists(fileName, "XKBOPTIONS", valueExists);
-                if (valueExists)
-                {
-                    errCode = configFile.regexpReplaceLine(fileName,
-                                            "XKBOPTIONS=",
-                                            "\\s*compose:\\w*",
-                                            "");
-                    configFile.regexpReplaceLine(fileName,
-                                            "XKBOPTIONS=",
-                                            "\"\\n",
-                                            QString(" %1\"\n")
-                                                   .arg(configValue));
-                }
-                else
-                    errCode = configFile.append(fileName,
-                                                QString("\nXKBOPTIONS=\"%1\"")
-                                                       .arg(configValue));
-                successful = testConfigFileError(errCode, fileName);
+            successful = configEditor.setValue(Key::CONFIG_KEYBD_COMPOSE,
+                                        composeKeyIndexToString(
+                                        ui->comboKeySequence->currentIndex()));
             break;
         case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
-            // Get mount entry for the root partition
-            exeFile.runCommand("mount | grep \" on / \"", true);
-            tempStringList = QString(exeFile.getOutput())
-                                    .split(' ').toVector().toList();
-            expression.setPattern("^/dev/([a-zA-Z]+)\\d*");
-            if (expression.indexIn(tempStringList[0]) < 0)
-                break;
-
-            // Set scheduler for disk I/O
-            fileName = SPANDA_MGCKF_FILE_UDEV_DISK;
-            configValue.clear();
-            if (ui->comboDiskType->currentIndex() == 1) // Using SSD
-                configValue = QString("ACTION==\"add|change\", "
-                                      "KERNEL==\"%1\", "
-                                      "ATTR{queue/rotational}==\"0\", "
-                                      "ATTR{queue/scheduler}=\"deadline\"")
-                                     .arg(expression.cap(1));
-            configFile.exists(fileName,
-                              QString("KERNEL==\"%1\", ATTR{queue/rotational}")
-                                     .arg(expression.cap(1)),
-                              valueExists);
-            if (valueExists)
-                errCode = configFile.regexpReplaceLine(fileName,
-                                        QString("KERNEL==\"%1\", "
-                                                "ATTR{queue/rotational}")
-                                              .arg(expression.cap(1)),
-                                        ".*", configValue);
-            else
-                errCode = configFile.append(fileName,
-                                            configValue.prepend("\n"));
-            successful = testConfigFileError(errCode, fileName);
-
-            // Adjust mount parameters for root partition
-            fileName = SPANDA_MGCKF_FILE_MOUNT_ROOT;
-            configFile.backupFile(fileName, backupName);
-            configFile.findLine(fileName, tempStringList[0], oldValue);
-            if (oldValue.isEmpty() || oldValue.indexOf(tempStringList[0]) > 0)
-                configFile.findLine(fileName,
-                                    DiskUtils::getUUIDByBlock(
-                                                        tempStringList[0]),
-                                    oldValue);
-            if (ui->comboDiskType->currentIndex() == 1) // Using SSD
-            {
-                configValue = " defaults";
-                if (!oldValue.contains(",discard"))
-                    configValue.append(",discard");
-                if (!oldValue.contains(",noatime"))
-                    configValue.append(",noatime");
-                QString newValue(oldValue);
-                newValue.replace(" defaults", configValue);
-                errCode = configFile.replace(fileName, oldValue, newValue);
-            }
-            else // Using HDD
-            {
-                configFile.regexpReplaceLine(fileName, oldValue,
-                                             ",discard", "");
-            }
-            successful &= testConfigFileError(errCode, fileName);
+            successful = configEditor.setValue(Key::CONFIG_DISK_PHYSICS,
+                                               ui->comboDiskType->currentIndex());
             break;
         case SPANDA_MGCKF_CONFIG_BOOT_TIMEOUT:
-            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
-            configFile.backupFile(fileName, backupName);
-            configValue = QString::number(ui->textTimeoutBoot->value());
-            errCode = configFile.regexpReplaceLine(fileName,
-                                     "GRUB_TIMEOUT=",
-                                     "#*GRUB_TIMEOUT=\\d*",
-                                     QString("GRUB_TIMEOUT=%1")
-                                             .arg(configValue));
-
-            if (testConfigFileError(errCode, fileName))
-            {
-                needUpdatingBoot = true;
-                successful = true;
-            }
+            successful = configEditor.setValue(Key::CONFIG_BOOT_TIMEOUT,
+                                               ui->textTimeoutBoot->value());
             break;
         case SPANDA_MGCKF_CONFIG_BOOT_RESOLUTION:
-            fileName = SPANDA_MGCKF_FILE_GRUB_DEFAULT;
-            configFile.backupFile(fileName, backupName);
-            configValue = bootResolutionIndexToString(
-                                    ui->comboBootResolution->currentIndex());
-            errCode = configFile.regexpReplaceLine(fileName,
-                                     "GRUB_GFXMODE=",
-                                     "#*GRUB_GFXMODE=\\w*",
-                                     QString("GRUB_GFXMODE=%1")
-                                             .arg(configValue));
-
-            if (testConfigFileError(errCode, fileName))
-            {
-                needUpdatingBoot = true;
-                successful = true;
-            }
+            successful = configEditor.setValue(Key::CONFIG_BOOT_RESOLUTION,
+                                        bootResolutionIndexToString(
+                                        ui->comboBootResolution->currentIndex()));
             break;
         case SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n:
-            fileName = SPANDA_MGCKF_FILE_MODCONF_IWLWIFI;
-            configFile.backupFile(fileName, backupName);
-            if (ui->checkIWiFi80211n->isChecked())
-                configValue = "0";
-            else
-                configValue = "1";
-            configFile.exists(fileName, "11n_disable=", valueExists);
-            if (valueExists)
-                errCode = configFile.regexpReplaceLine(fileName,
-                                     "11n_disable=",
-                                     "11n_disable=\\w*",
-                                     QString("11n_disable=%1")
-                                            .arg(configValue));
-            else
-                errCode = configFile.append(fileName,
-                                     QString("\noptions iwlwifi 11n_disable=%1")
-                                            .arg(configValue));
-            successful = testConfigFileError(errCode, fileName);
+            successful = configEditor.setValue(Key::CONFIG_WIFI_INTEL_80211n,
+                                               ui->checkIWiFi80211n->isChecked());
             break;
         case SPANDA_MGCKF_CONFIG_APP_ENV_SYS:
-            fileName = SPANDA_MGCKF_FILE_ENVIRONMENT_SYS;
-            configFile.backupFile(fileName, backupName);
-            successful = writeEnvConfigFile(fileName, envVarChanges);
+            successful = configEditor.setEnvironment(envVarChanges, true);
             break;
         case SPANDA_MGCKF_CONFIG_APP_ENV_USER:
-            fileName = SPANDA_MGCKF_FILE_ENVIRONMENT_USER;
-            configFile.backupFile(fileName, backupName);
-            successful = writeEnvConfigFile(fileName, envVarChanges);
+            successful = configEditor.setEnvironment(envVarChanges, false);
             break;
         case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
-	    GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
-                                  SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING,
-                                  QVariant(ui->textWindowScaling->value()));
-            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_GNOME_IFACE,
-                                  SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING,
-                                  QVariant(
-                                    float(ui->textWindowTextScaling->value())));
-            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
-                                  SPANDA_MGCKF_GCONF_KEY_GNOME_SCALING,
-                                  QVariant(ui->textWindowScaling->value()));
-            GSettingsEditor::setValue(SPANDA_MGCKF_GCONF_SCHEMA_DDE_GNOME,
-                                  SPANDA_MGCKF_GCONF_KEY_GNOME_TEXTSCALING,
-                                  QVariant(
-                                    float(ui->textWindowTextScaling->value())));
-            successful = true;
+            successful = configEditor.setValue(Key::CONFIG_DISP_SCALE_GNOME_WINDOW,
+                                               ui->textWindowScaling->value());
+            successful &= configEditor.setValue(Key::CONFIG_DISP_SCALE_GNOME_TEXT,
+                                        float(ui->textWindowTextScaling->value()));
             break;
         default:;
     }
-    if (successful)
-        setConfigModified(configIndex, false);
     return successful;
 }
 
 void MagicKonfug::setConfigModified(int configIndex, bool modified)
 {
-    configMoidified[configIndex] = modified;
-
     // Update modification state of the related page
     // Note: the page flag is not set to "false" even when
     //       all related config entries are set to "false".
@@ -554,6 +268,7 @@ void MagicKonfug::showEnvEditor(bool systemScope)
         currentEnvEditMode = EnvEditMode::UserScope;
         envEditor->setBaseEnvironmentText(tr("User Environment"));
     }
+    systemScopeEnvEdit = systemScope;
 
     Utils::Environment env(Utils::Environment::systemEnvironment());
     envEditor->setBaseEnvironment(env);
@@ -587,68 +302,6 @@ void MagicKonfug::destroyWidget(QWidget* widget)
         widget->close();
         delete widget;
     }
-}
-
-bool MagicKonfug::testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
-                                      const QString& fileName,
-                                      const bool aborted)
-{
-    bool ret = false;
-    switch (errCode)
-    {
-        case ConfigFileEditor::FileOk:
-            ret = true;
-            break;
-        case ConfigFileEditor::FileNotFound:
-            DialogUtils::warnMissingFile(fileName, aborted);
-        break;
-        case ConfigFileEditor::NoPermission:
-            DialogUtils::warnPermission(fileName);
-        default:;
-    }
-    return ret;
-}
-
-bool MagicKonfug::writeEnvConfigFile(QString fileName,
-                                     QList<Utils::EnvironmentItem> changes)
-{
-    bool successful = true;
-    ConfigFileEditor::FileErrorCode errCode;
-    Utils::FileName filePath = Utils::FileName::fromUserInput(fileName);
-
-    Utils::Environment tempEnv(Utils::Environment::systemEnvironment());
-    for (int i=0; i<changes.count(); i++)
-        changes[i].apply(&tempEnv);
-    changes = Utils::Environment::systemEnvironment().diff(tempEnv, true);
-
-    for (int i=0; i<changes.count(); i++)
-    {
-        // Deal with prepending and appending for certain variables
-        if (changes[i].name == "PATH")
-        switch (changes[i].operation)
-        {
-            case Utils::EnvironmentItem::Prepend:
-                changes[i].value.append(
-                                    QString(":\"$%1\"").arg(changes[i].name));
-                break;
-            case Utils::EnvironmentItem::Append:
-                changes[i].value.prepend(
-                                    QString("\"$%1\":").arg(changes[i].name));
-                break;
-            default:;
-        }
-        errCode = ConfigFileEditor::regexpWriteLine(filePath.toString(),
-                                    QString("%1=").arg(changes[i].name),
-                                    QString("\\s*%1=[^\n]*").arg(changes[i].name),
-                                    QString("%1=%2")
-                                           .arg(changes[i].name)
-                                           .arg(changes[i].value));
-        successful = testConfigFileError(errCode, filePath.toString());
-        if (!successful)
-            break;
-    }
-
-    return successful;
 }
 
 int MagicKonfug::composeKeyStringToIndex(const QString &str)
@@ -721,21 +374,19 @@ QString MagicKonfug::bootResolutionIndexToString(int index)
     }
 }
 
-void MagicKonfug::onCommandFinished(bool successful)
+void MagicKonfug::onConfigEditorApplied(bool successful)
 {
-    if (successful)
-    {
-            QMessageBox::information(this,
-                                     tr("Configuration(s) applied"),
-                                     tr("Finish applying configuration. "
-                                     "You may need to reboot to have them "
-                                     "take effect."));
-    }
-
     showStatusPage(false);
     if (ui->groupPage->currentIndex() < pageGroupCount)
         ui->buttonBox->setEnabled(
                         configPageMoidified[ui->groupPage->currentIndex()]);
+}
+
+void MagicKonfug::onConfigEditorPromptReboot()
+{
+    QMessageBox::information(this,
+                             tr("Reboot needed"),
+                             tr("Some options need a reboot to take effect."));
 }
 
 void MagicKonfug::onEnvEditorClosing()
@@ -777,7 +428,6 @@ void MagicKonfug::on_buttonExit_clicked()
     close();
 }
 
-
 void MagicKonfug::on_groupPage_currentChanged(int arg1)
 {
     if (arg1 >= 0 && arg1 < pageGroupCount)
@@ -811,8 +461,10 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_SHUTDOWN_TIMEOUT);
                 break;
             case 3: // Application
-                applied = applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_SYS);
-                applied &= applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_USER);
+                if (systemScopeEnvEdit)
+                    applied = applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_SYS);
+                else
+                    applied = applyConfig(SPANDA_MGCKF_CONFIG_APP_ENV_USER);
                 break;
             case 4: // I/O
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
@@ -823,14 +475,11 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 break;
             default:;
         }
+        showStatusPage(true);
+        applied &= configEditor.applyConfig();
+
         if (pageIndex < pageGroupCount && applied)
             configPageMoidified[pageIndex] = false;
-        if (needUpdatingBoot)
-        {
-            if (bootConfig.updateBootMenu())
-                showStatusPage(true);
-            needUpdatingBoot = false;
-        }
     }
 }
 

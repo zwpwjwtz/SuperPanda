@@ -2,8 +2,7 @@
 #define MagicKonfug_H
 
 #include <QMainWindow>
-#include "Interfaces/configfileeditor.h"
-#include "Utils/bootutils.h"
+#include "configcollection.h"
 #include "Utils/environment.h"
 
 
@@ -38,15 +37,12 @@ private:
 
     Ui::MagicKonfug *ui;
     EnvironmentWidget* envEditor;
-    ConfigFileEditor configFile;
-    BootUtils bootConfig;
+    ConfigCollection configEditor;
+    EnvEditMode currentEnvEditMode;
     QList<Utils::EnvironmentItem> envVarChanges;
     static const int pageGroupCount = 6;
-    static const int configEntryCount = 12;
-    EnvEditMode currentEnvEditMode;
     bool configPageMoidified[pageGroupCount];
-    bool configMoidified[configEntryCount];
-    bool needUpdatingBoot;
+    bool systemScopeEnvEdit;
 
     void loadConfig();
     bool applyConfig(int configIndex);
@@ -55,19 +51,14 @@ private:
     void setWidgetDisabled(QWidget* widget);
     void showEnvEditor(bool systemScope = false);
     void showStatusPage(bool pageVisible, QString text = QString());
-    static void destroyWidget(QWidget* widget);
-    static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
-                                    const QString& fileName,
-                                    const bool aborted = true);
-    static bool writeEnvConfigFile(QString fileName,
-                                   QList<Utils::EnvironmentItem> changes);
-    static int composeKeyStringToIndex(const QString& str);
+    static void destroyWidget(QWidget* widget);static int composeKeyStringToIndex(const QString& str);
     static QString composeKeyIndexToString(int index);
     static int bootResolutionStringToIndex(const QString& str);
     static QString bootResolutionIndexToString(int index);
 
 private slots:
-    void onCommandFinished(bool successful);
+    void onConfigEditorApplied(bool successful);
+    void onConfigEditorPromptReboot();
     void onEnvEditorClosing();
 
     void on_listWidget_clicked(const QModelIndex &index);
