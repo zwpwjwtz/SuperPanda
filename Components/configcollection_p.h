@@ -30,6 +30,7 @@ public:
 
     ConfigCollectionPrivate(ConfigCollection* parent);
     void doUpdating();
+    static QString getEnvironmentVariable(QString key);
     static bool testConfigFileError(ConfigFileEditor::FileErrorCode errCode,
                                     const QString& fileName,
                                     const bool aborted = true);

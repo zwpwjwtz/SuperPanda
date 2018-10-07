@@ -513,19 +513,28 @@ bool ConfigCollection::setEnvironment(QList<Utils::EnvironmentItem> changes,
     for (int i=0; i<changes.count(); i++)
     {
         // Deal with prepending and appending for certain variables
-        if (changes[i].name == "PATH")
         switch (changes[i].operation)
         {
             case EnvironmentItem::Prepend:
-                changes[i].value.append(
+                if (changes[i].name == "PATH")
+                    changes[i].value.append(
                                     QString(":\"$%1\"").arg(changes[i].name));
+                else
+                    changes[i].value.append(
+                                    d->getEnvironmentVariable(changes[i].name));
                 break;
             case EnvironmentItem::Append:
-                changes[i].value.prepend(
+                if (changes[i].name == "PATH")
+                    changes[i].value.prepend(
                                     QString("\"$%1\":").arg(changes[i].name));
+                else
+                    changes[i].value.prepend(
+                                    d->getEnvironmentVariable(changes[i].name));
                 break;
             default:;
         }
+        if (!systemScope)
+            changes[i].name.prepend("export ");
         errCode = ConfigFileEditor::regexpWriteLine(filePath.toString(),
                                         QString("%1=").arg(changes[i].name),
                                         QString("\\s*%1=[^\n]*")
@@ -583,6 +592,20 @@ void ConfigCollectionPrivate::doUpdating()
         }
         emit q->configApplied(true);
     }
+}
+
+QString ConfigCollectionPrivate::getEnvironmentVariable(QString key)
+{
+    using namespace Utils;
+
+    static Environment::const_iterator i;
+    Environment currentEnv(Environment::systemEnvironment());
+    for (i=currentEnv.constBegin(); i!=currentEnv.constEnd(); i++)
+    {
+        if (i.key() == key)
+            return i.value();
+    }
+    return "";
 }
 
 bool ConfigCollectionPrivate::testConfigFileError(
