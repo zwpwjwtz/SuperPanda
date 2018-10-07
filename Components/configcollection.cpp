@@ -1,9 +1,13 @@
+#include <QSize>
+#include <QFile>
+
 #include "configcollection.h"
 #include "configcollection_p.h"
 #include "config_files.h"
 #include "config_gconf.h"
 #include "../Utils/dialogutils.h"
 #include "../Utils/diskutils.h"
+#include "../Utils/screenutils.h"
 
 
 ConfigCollection::ConfigCollection()
@@ -13,7 +17,7 @@ ConfigCollection::ConfigCollection()
 
 void ConfigCollection::loadConfig()
 {
-    for (int i=1; i<ConfigCollectionPrivate::MaxConfigEntry; i++)
+    for (int i=1; i<=ConfigCollectionPrivate::MaxConfigEntry; i++)
         resetValue(ConfigEntryKey(i));
 }
 
@@ -253,6 +257,58 @@ bool ConfigCollection::applyConfig()
                                       i.value());
                 successful = true;
                 break;
+            case CONFIG_DISP_RESOLUTION:
+                fileName = SPANDA_CONFIG_FILE_AUTOSTART_USER;
+                if (i.value().toSize().isValid())
+                {
+                    configValue = ScreenUtils::getModeLine(i.value().toSize());
+                    if (!d->configFile.fileExists(fileName))
+                    {
+                        d->configFile.append(fileName,
+                                             "[Desktop Entry]\n"
+                                             "Exec=bash -c \". ~/.xsession\"\n"
+                                             "Name=SuperPanda-SetResolution\n"
+                                             "Type=Application");
+                    }
+
+                    fileName = SPANDA_CONFIG_FILE_XSESSION_USER;
+                    if (!d->configFile.fileExists(fileName))
+                    {
+                        errCode = d->configFile.append(fileName,
+                                    QString("xrandr --newmode %1\n"
+                                            "xrandr --addmode %2 %3\n"
+                                            "xrandr --output %2 --mode %3")
+                                    .arg(configValue)
+                                    .arg(ScreenUtils::currentMonitor())
+                                    .arg(ScreenUtils::getModeName(configValue)));
+                    }
+                    else
+                    {
+                        errCode = d->configFile.replaceLine(fileName,
+                                    "xrandr --newmode ",
+                                    QString("xrandr --newmode %1\n")
+                                           .arg(configValue));
+                        errCode = d->configFile.replaceLine(fileName,
+                                    "xrandr --addmode ",
+                                    QString("xrandr --addmode %1 %2\n")
+                                           .arg(ScreenUtils::currentMonitor())
+                                           .arg(ScreenUtils::getModeName(
+                                                                configValue)));
+                        errCode = d->configFile.replaceLine(fileName,
+                                    "xrandr --output ",
+                                    QString("xrandr --output %2 --mode %3\n")
+                                           .arg(ScreenUtils::currentMonitor())
+                                           .arg(ScreenUtils::getModeName(
+                                                                configValue)));
+                    }
+                    successful = d->testConfigFileError(errCode, fileName);
+                }
+                else
+                {
+                    successful = d->configFile.deleteFile(fileName);
+                }
+                d->needResetScreen = successful;
+                break;
             default:;
         }
         if (successful)
@@ -271,6 +327,8 @@ QVariant ConfigCollection::getValue(ConfigEntryKey key)
 bool ConfigCollection::setValue(ConfigEntryKey key, QVariant value)
 {
     Q_D(ConfigCollection);
+    if (!d->configList.contains(key))
+        resetValue(key);
     if (d->configList.value(key) != value)
     {
         d->configList[int(key)] = value;
@@ -283,10 +341,10 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
 {
     Q_D(ConfigCollection);
 
-    static QVariant value;
-    static QString configValue;
-    static QRegExp expression;
-    static ConfigFileEditor::FileErrorCode errCode;
+    QVariant value;
+    QString configValue;
+    QRegExp expression;
+    ConfigFileEditor::FileErrorCode errCode;
     switch(key)
     {
         case CONFIG_SERVICE_TIMEOUT:
@@ -322,6 +380,8 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                 value = !configValue.isEmpty();
             break;
         case CONFIG_KEYBD_COMPOSE:
+            if (!d->configFile.fileExists(SPANDA_CONFIG_FILE_KEYBD_DEFAULT))
+                break;
             value = QString();
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_KEYBD_DEFAULT,
                                           "XKBOPTIONS=",
@@ -385,11 +445,20 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                                                   SPANDA_CONFIG_GCONF_KEY_GNOME_SCALING);
             break;
         case CONFIG_DISP_SCALE_GNOME_TEXT:
-            value = GSettingsEditor::getValue(SPANDA_CONFIG_GCONF_SCHEMA_GNOME_IFACE,
+            value = GSettingsEditor::getValue(SPANDA_CONFIG_GCONF_SCHEMA_DDE_GNOME,
                                               SPANDA_CONFIG_GCONF_KEY_GNOME_TEXTSCALING);
             if (!value.isValid())
-                value = GSettingsEditor::getValue(SPANDA_CONFIG_GCONF_SCHEMA_DDE_GNOME,
+                value = GSettingsEditor::getValue(SPANDA_CONFIG_GCONF_SCHEMA_GNOME_IFACE,
                                                   SPANDA_CONFIG_GCONF_KEY_GNOME_TEXTSCALING);
+            break;
+        case CONFIG_DISP_RESOLUTION:
+            value = QSize();
+            if (d->configFile.fileExists(SPANDA_CONFIG_FILE_AUTOSTART_USER))
+            {
+                // Assuming user do not change resolution manually, so that
+                // current resolution is exactly the one defined in config file
+                value = ScreenUtils::currentResolution();
+            }
             break;
         default:;
     }
@@ -493,6 +562,13 @@ void ConfigCollectionPrivate::doUpdating()
         needUpdatingBoot = false;
         if (bootConfig.updateBootMenu())
             finished = false;
+    }
+    if (needResetScreen)
+    {
+        needResetScreen = false;
+        QSize newResolution =
+                q->getValue(ConfigCollection::CONFIG_DISP_RESOLUTION).toSize();
+        ScreenUtils::setMode(ScreenUtils::currentMonitor(), newResolution);
     }
     if (finished)
     {

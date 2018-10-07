@@ -17,6 +17,7 @@
 #define SPANDA_MGCKF_CONFIG_APP_ENV_SYS 9
 #define SPANDA_MGCKF_CONFIG_APP_ENV_USER 10
 #define SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME 11
+#define SPANDA_MGCKF_CONFIG_DISP_RESOLUTION 12
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -29,7 +30,6 @@ MagicKonfug::MagicKonfug(QWidget *parent) :
     move((QApplication::desktop()->width() - width()) / 2,
          (QApplication::desktop()->height() - height()) / 2);
 
-    ui->frameStatus->hide();
     ui->listWidget->setStyleSheet("background-color: transparent;");
     ui->groupPage->setCurrentIndex(pageGroupCount);
     envEditor = nullptr;
@@ -120,6 +120,16 @@ void MagicKonfug::loadConfig()
                             ConfigCollection::CONFIG_DISP_SCALE_GNOME_TEXT);
     ui->textWindowTextScaling->setValue(value.toDouble());
 
+    value = configEditor.getValue(ConfigCollection::CONFIG_DISP_RESOLUTION);
+    if (value.toSize().isValid())
+    {
+        ui->radioCustomizedResolution->setChecked(true);
+        ui->textScreenWidth->setValue(value.toSize().width());
+        ui->textScreenHeight->setValue(value.toSize().height());
+    }
+    else
+        ui->radioDefaultResolution->setChecked(true);
+
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
     ui->buttonBox->setEnabled(false);
@@ -147,9 +157,12 @@ bool MagicKonfug::applyConfig(int configIndex)
                                                ui->checkTurboFreq->isChecked());
             break;
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
+            if (ui->comboKeySequence->isEnabled())
             successful = configEditor.setValue(Key::CONFIG_KEYBD_COMPOSE,
                                         composeKeyIndexToString(
                                         ui->comboKeySequence->currentIndex()));
+            else
+                successful = true;
             break;
         case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
             successful = configEditor.setValue(Key::CONFIG_DISK_PHYSICS,
@@ -180,6 +193,18 @@ bool MagicKonfug::applyConfig(int configIndex)
             successful &= configEditor.setValue(Key::CONFIG_DISP_SCALE_GNOME_TEXT,
                                         float(ui->textWindowTextScaling->value()));
             break;
+        case SPANDA_MGCKF_CONFIG_DISP_RESOLUTION:
+        {
+            QSize resolution;
+            if (ui->radioCustomizedResolution->isChecked())
+            {
+                resolution.setHeight(ui->textScreenHeight->value());
+                resolution.setWidth(ui->textScreenWidth->value());
+            }
+            successful = configEditor.setValue(Key::CONFIG_DISP_RESOLUTION,
+                                               resolution);
+            break;
+        }
         default:;
     }
     return successful;
@@ -220,6 +245,7 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
         // I/O
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
         case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
+        case SPANDA_MGCKF_CONFIG_DISP_RESOLUTION:
             setConfigPageModified(4, modified);
             break;
 
@@ -278,10 +304,10 @@ void MagicKonfug::showEnvEditor(bool systemScope)
 
 void MagicKonfug::showStatusPage(bool pageVisible, QString text)
 {
-    if (pageVisible)
+    if (pageVisible && ui->groupPage->currentIndex() < pageGroupCount)
     {
-        ui->groupPage->hide();
-        ui->frameStatus->show();
+        lastPageGroupIndex = ui->groupPage->currentIndex();
+        ui->groupPage->setCurrentIndex(pageGroupCount + 2);
         ui->buttonBox->setEnabled(false);
         if (text.isEmpty())
             text = tr("Processing configuration, please wait...");
@@ -289,8 +315,7 @@ void MagicKonfug::showStatusPage(bool pageVisible, QString text)
     }
     else
     {
-        ui->groupPage->show();
-        ui->frameStatus->hide();
+        ui->groupPage->setCurrentIndex(lastPageGroupIndex);
         ui->buttonBox->setEnabled(true);
     }
 }
@@ -377,9 +402,10 @@ QString MagicKonfug::bootResolutionIndexToString(int index)
 void MagicKonfug::onConfigEditorApplied(bool successful)
 {
     showStatusPage(false);
-    if (ui->groupPage->currentIndex() < pageGroupCount)
-        ui->buttonBox->setEnabled(
-                        configPageMoidified[ui->groupPage->currentIndex()]);
+    int pageIndex = ui->groupPage->currentIndex();
+    configPageMoidified[pageIndex] = !successful;
+    if (pageIndex < pageGroupCount)
+        ui->buttonBox->setEnabled(!successful);
 }
 
 void MagicKonfug::onConfigEditorPromptReboot()
@@ -469,17 +495,23 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
             case 4: // I/O
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
                 break;
             case 5: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
                 break;
             default:;
         }
+        if (!applied)
+        {
+            QMessageBox::warning(this, tr("Configuration not applied"),
+                                 tr("Certain value(s) cannot not be set due to "
+                                    "incorrect format or range. Please check "
+                                    "then try it again."));
+            return;
+        }
         showStatusPage(true);
-        applied &= configEditor.applyConfig();
-
-        if (pageIndex < pageGroupCount && applied)
-            configPageMoidified[pageIndex] = false;
+        configEditor.applyConfig();
     }
 }
 
@@ -551,4 +583,30 @@ void MagicKonfug::on_textWindowTextScaling_valueChanged(double arg1)
 {
     Q_UNUSED(arg1)
     setConfigModified(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
+}
+
+void MagicKonfug::on_radioDefaultResolution_clicked()
+{
+    ui->textScreenWidth->setEnabled(false);
+    ui->textScreenHeight->setEnabled(false);
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
+}
+
+void MagicKonfug::on_radioCustomizedResolution_clicked()
+{
+    ui->textScreenWidth->setEnabled(true);
+    ui->textScreenHeight->setEnabled(true);
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
+}
+
+void MagicKonfug::on_textScreenWidth_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
+}
+
+void MagicKonfug::on_textScreenHeight_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
 }

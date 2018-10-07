@@ -34,7 +34,7 @@ QVariant GSettingsEditor::getValue(QString schema, QString key)
                           .arg(schema).arg(key),
                    true);
     if (!(exe.getErrCode() == ExeLauncher::ExecOk && exe.getExitCode() == 0))
-        return false;
+        return QVariant();
 
     QByteArray output(exe.getOutput());
     QString temp;

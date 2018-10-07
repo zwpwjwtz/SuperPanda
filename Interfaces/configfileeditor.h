@@ -21,6 +21,7 @@ public:
     static bool fileExists(const QString& fileName);
     static FileErrorCode backupFile(const QString& origin,
                                     QString& destination);
+    static FileErrorCode deleteFile(const QString& fileName);
 
     static FileErrorCode exists(const QString& fileName,
                                 const QString& search,
@@ -31,6 +32,10 @@ public:
     static FileErrorCode replace(const QString& fileName,
                                  const QString& search,
                                  const QString& replace);
+    static FileErrorCode replaceLine(const QString& fileName,
+                                     const QString& search,
+                                     const QString& replace,
+                                     bool appendIfNotFound = true);
     static FileErrorCode regexpReplaceLine(const QString& fileName,
                                            const QString& search,
                                            const QString& expression,
@@ -42,6 +47,9 @@ public:
                                          bool replaceIfExists = true);
     static FileErrorCode append(const QString& fileName,
                                 const QString& content);
+
+private:
+    static QString expandFileName(const QString& fileName);
 };
 
 #endif // CONFIGFILEEDITOR_H

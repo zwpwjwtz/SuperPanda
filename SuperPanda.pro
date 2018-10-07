@@ -50,7 +50,8 @@ SOURCES +=\
     Widgets/environmentdialog.cpp \
     Widgets/environmentwidget.cpp \
     Utils/gsettingseditor.cpp \
-    Components/configcollection.cpp
+    Components/configcollection.cpp \
+    Utils/screenutils.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -77,7 +78,8 @@ HEADERS  += \
     Components/configcollection.h \
     Components/configcollection_p.h \
     Components/config_files.h \
-    Components/config_gconf.h
+    Components/config_gconf.h \
+    Utils/screenutils.h
 
 FORMS    += \
     Components/magickonfug.ui \

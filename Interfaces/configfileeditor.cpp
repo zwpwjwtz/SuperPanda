@@ -1,4 +1,5 @@
 #include <QTemporaryFile>
+#include <QDir>
 #include "configfileeditor.h"
 
 #define SPANDA_IFACE_CONFEDIT_BUFFER_LEN 1024
@@ -12,7 +13,7 @@ ConfigFileEditor::ConfigFileEditor()
 
 bool ConfigFileEditor::fileExists(const QString& fileName)
 {
-    QFile file(fileName);
+    QFile file(expandFileName(fileName));
     return file.exists();
 }
 
@@ -23,7 +24,7 @@ ConfigFileEditor::exists(const QString& fileName,
 {
     exist = false;
 
-    QFile file(fileName);
+    QFile file(expandFileName(fileName));
     if (!file.exists())
         return FileNotFound;
     if (!file.open(QFile::ReadOnly))
@@ -52,7 +53,7 @@ ConfigFileEditor::findLine(const QString& fileName,
 {
     matchedLine.clear();
 
-    QFile file(fileName);
+    QFile file(expandFileName(fileName));
     if (!file.exists())
         return FileNotFound;
     if (!file.open(QFile::ReadOnly))
@@ -80,7 +81,7 @@ ConfigFileEditor::replace(const QString& fileName,
                           const QString& search,
                           const QString& replace)
 {
-    QFile file(fileName);
+    QFile file(expandFileName(fileName));
     if (!file.exists())
         return FileNotFound;
     if (!file.open(QFile::ReadOnly))
@@ -113,7 +114,6 @@ ConfigFileEditor::replace(const QString& fileName,
         file.close();
 
         // Modify the searched content with replacing content
-        file.setFileName(fileName);
         file.open(QFile::ReadWrite);
         if (!file.isWritable())
             return NoPermission;
@@ -128,6 +128,24 @@ ConfigFileEditor::replace(const QString& fileName,
     }
     file.close();
     return FileOk;
+}
+
+ConfigFileEditor::FileErrorCode
+ConfigFileEditor::replaceLine(const QString& fileName,
+                              const QString& search,
+                              const QString& replace,
+                              bool appendIfNotFound)
+{
+    QString oldConfigLine;
+    FileErrorCode errCode = findLine(fileName, search, oldConfigLine);
+    if (oldConfigLine.isEmpty())
+    {
+        if (appendIfNotFound)
+            errCode = ConfigFileEditor::append(fileName, replace);
+    }
+    else
+        errCode = ConfigFileEditor::replace(fileName, oldConfigLine, replace);
+    return errCode;
 }
 
 ConfigFileEditor::FileErrorCode
@@ -154,8 +172,7 @@ ConfigFileEditor::regexpWriteLine(const QString& fileName,
                                   bool replaceIfExists)
 {
     bool existed;
-    FileErrorCode errCode = FileOk;
-    exists(fileName, search, existed);
+    FileErrorCode errCode = exists(fileName, search, existed);
     if (existed)
     {
         if (replaceIfExists)
@@ -169,7 +186,7 @@ ConfigFileEditor::regexpWriteLine(const QString& fileName,
 ConfigFileEditor::FileErrorCode ConfigFileEditor::backupFile(const QString &origin,
                                                              QString &destination)
 {
-    QFile file(origin);
+    QFile file(expandFileName(origin));
     QString destName;
     int backupCount = 1;
 
@@ -225,13 +242,35 @@ ConfigFileEditor::FileErrorCode ConfigFileEditor::backupFile(const QString &orig
 }
 
 ConfigFileEditor::FileErrorCode
+ConfigFileEditor::deleteFile(const QString &fileName)
+{
+    QFile file(expandFileName(fileName));
+    if (!file.exists())
+        return FileNotFound;
+    if (file.remove())
+        return FileOk;
+    else
+        return NoPermission;
+}
+
+ConfigFileEditor::FileErrorCode
 ConfigFileEditor::append(const QString &fileName, const QString &content)
 {
-    QFile file(fileName);
+    QFile file(expandFileName(fileName));
     if (!file.open(QFile::Append))
         return NoPermission;
 
     file.write(content.toUtf8());
     file.close();
     return FileOk;
+}
+
+QString ConfigFileEditor::expandFileName(const QString &fileName)
+{
+    QString fullName(fileName);
+    if (fullName.indexOf("$HOME") >= 0)
+        fullName.replace("$HOME", QDir::homePath());
+    if (fullName.indexOf('~') == 0)
+        fullName.replace(0, 1, QDir::homePath());
+    return fullName;
 }

@@ -10,5 +10,8 @@
 #define SPANDA_CONFIG_FILE_MODCONF_IWLWIFI "/etc/modprobe.d/iwlwifi.conf"
 #define SPANDA_CONFIG_FILE_ENVIRONMENT_SYS "/etc/environment"
 #define SPANDA_CONFIG_FILE_ENVIRONMENT_USER "~/.xsessionrc"
+#define SPANDA_CONFIG_FILE_XSESSION_USER "~/.xsession"
+#define SPANDA_CONFIG_FILE_AUTOSTART_USER "~/.config/autostart/" \
+                                          "spanda_set_resolution.desktop"
 
 #endif // CONFIG_FILES_H

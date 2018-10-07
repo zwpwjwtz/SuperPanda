@@ -24,8 +24,9 @@ public:
     BootUtils bootConfig;
     ConfigFileEditor configFile;
     ExeLauncher exeFile;
+    bool needResetScreen;
     bool needUpdatingBoot;
-    static const int MaxConfigEntry = 12;
+    static const int MaxConfigEntry = 13;
 
     ConfigCollectionPrivate(ConfigCollection* parent);
     void doUpdating();

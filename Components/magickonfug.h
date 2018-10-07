@@ -40,6 +40,7 @@ private:
     ConfigCollection configEditor;
     EnvEditMode currentEnvEditMode;
     QList<Utils::EnvironmentItem> envVarChanges;
+    int lastPageGroupIndex;
     static const int pageGroupCount = 6;
     bool configPageMoidified[pageGroupCount];
     bool systemScopeEnvEdit;
@@ -78,6 +79,10 @@ private slots:
     void on_buttonEditUserEnv_clicked();
     void on_textWindowScaling_valueChanged(int arg1);
     void on_textWindowTextScaling_valueChanged(double arg1);
+    void on_radioDefaultResolution_clicked();
+    void on_radioCustomizedResolution_clicked();
+    void on_textScreenWidth_valueChanged(int arg1);
+    void on_textScreenHeight_valueChanged(int arg1);
 };
 
 #endif // MagicKonfug_H
