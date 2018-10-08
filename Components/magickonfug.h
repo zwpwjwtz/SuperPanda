@@ -83,6 +83,9 @@ private slots:
     void on_radioCustomizedResolution_clicked();
     void on_textScreenWidth_valueChanged(int arg1);
     void on_textScreenHeight_valueChanged(int arg1);
+    void on_radioDisableSwap_clicked();
+    void on_radioEnableSwap_clicked();
+    void on_textSwapSize_valueChanged(int arg1);
 };
 
 #endif // MagicKonfug_H

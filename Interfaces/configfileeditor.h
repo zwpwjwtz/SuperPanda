@@ -19,6 +19,7 @@ public:
     ConfigFileEditor();
 
     static bool fileExists(const QString& fileName);
+    static qint64 fileSize(const QString& fileName);
     static FileErrorCode backupFile(const QString& origin,
                                     QString& destination);
     static FileErrorCode deleteFile(const QString& fileName);

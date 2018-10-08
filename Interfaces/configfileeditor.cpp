@@ -17,6 +17,15 @@ bool ConfigFileEditor::fileExists(const QString& fileName)
     return file.exists();
 }
 
+qint64 ConfigFileEditor::fileSize(const QString& fileName)
+{
+    QFile file(expandFileName(fileName));
+    if (file.exists())
+        return file.size();
+    else
+        return 0;
+}
+
 ConfigFileEditor::FileErrorCode
 ConfigFileEditor::exists(const QString& fileName,
                          const QString& search,

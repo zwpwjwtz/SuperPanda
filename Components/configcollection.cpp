@@ -1,5 +1,4 @@
 #include <QSize>
-#include <QFile>
 
 #include "configcollection.h"
 #include "configcollection_p.h"
@@ -8,6 +7,7 @@
 #include "../Utils/dialogutils.h"
 #include "../Utils/diskutils.h"
 #include "../Utils/screenutils.h"
+#include "../Utils/swaputils.h"
 
 
 ConfigCollection::ConfigCollection()
@@ -23,6 +23,7 @@ void ConfigCollection::loadConfig()
 
 bool ConfigCollection::applyConfig()
 {
+    using namespace Utils;
     Q_D(ConfigCollection);
 
     bool successful;
@@ -305,9 +306,44 @@ bool ConfigCollection::applyConfig()
                 }
                 else
                 {
-                    successful = d->configFile.deleteFile(fileName);
+                    errCode = d->configFile.deleteFile(fileName);
+                    successful = d->testConfigFileError(errCode, fileName);
                 }
                 d->needResetScreen = successful;
+                break;
+            case CONFIG_DISK_SWAP:
+                if (i.value().toInt() > 0)
+                {
+                    // See if the free space is enough
+                    FileName swapFileName = FileName::fromUtf8(
+                                            SPANDA_CONFIG_FILE_SWAPFILE_ROOT);
+                    qint64 available = DiskUtils::getFreeSpace(
+                                        swapFileName.parentDir().toString()) +
+                            ConfigFileEditor::fileSize(swapFileName.toString());
+                    qint64 required = qint64(i.value().toInt()) * 1024 * 1024;
+                    if (available < required)
+                    {
+                        DialogUtils::warnInsufficientSpace(
+                                            swapFileName.parentDir().toString(),
+                                            required);
+                        break;
+                    }
+                }
+
+                // Add an entry in /etc/fstab for the swap file
+                fileName = SPANDA_CONFIG_FILE_MOUNT_ROOT;
+                d->configFile.backupFile(fileName, backupName);
+                if (i.value().toInt() > 0)
+                    configValue = QString("%1 none swap defaults 0 0")
+                                         .arg(SPANDA_CONFIG_FILE_SWAPFILE_ROOT);
+                else
+                    configValue.clear();
+                errCode = d->configFile.replaceLine(fileName,
+                                    QString("%1 none swap")
+                                        .arg(SPANDA_CONFIG_FILE_SWAPFILE_ROOT),
+                                    configValue);
+                successful = d->testConfigFileError(errCode, fileName);
+                d->needResetSwapFile = successful;
                 break;
             default:;
         }
@@ -460,6 +496,10 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                 value = ScreenUtils::currentResolution();
             }
             break;
+        case CONFIG_DISK_SWAP:
+            value = d->configFile.fileSize(SPANDA_CONFIG_FILE_SWAPFILE_ROOT)
+                                 / 1024 / 1024;
+            break;
         default:;
     }
 
@@ -554,11 +594,25 @@ ConfigCollectionPrivate::ConfigCollectionPrivate(ConfigCollection *parent)
 {
     this->q_ptr = parent;
     needUpdatingBoot = false;
+    needResetScreen = false;
+    needResetSwapFile = false;
 
     connect(&bootConfig,
             SIGNAL(commandFinished(bool)),
             this,
             SLOT(onUpdatingBootFinished()));
+    connect(&swapConfig,
+            SIGNAL(finishedMakingSwapfile()),
+            this,
+            SLOT(onFinishedMakingSwapfile()));
+    connect(&swapConfig,
+            SIGNAL(finishedRemovingSwapfile()),
+            this,
+            SLOT(onFinishedRemovingSwapfile()));
+    connect(&swapConfig,
+            SIGNAL(finishedTurnOnSwap()),
+            this,
+            SLOT(onFinishedTurnOnSwap()));
 }
 
 void ConfigCollectionPrivate::doUpdating()
@@ -579,6 +633,28 @@ void ConfigCollectionPrivate::doUpdating()
                 q->getValue(ConfigCollection::CONFIG_DISP_RESOLUTION).toSize();
         ScreenUtils::setMode(ScreenUtils::currentMonitor(), newResolution);
     }
+    if (needResetSwapFile)
+    {
+        needResetSwapFile = false;
+        bool successful;
+        QString swapFile(SPANDA_CONFIG_FILE_SWAPFILE_ROOT);
+        qint64 swapSize = q->getValue(ConfigCollection::CONFIG_DISK_SWAP).toInt();
+        if (swapSize > 0)
+        {
+            swapSize *= 1024 * 1024; // Convert from MiB to Byte
+            successful = swapConfig.makeSwapFile(swapFile, swapSize);
+        }
+        else
+            successful = swapConfig.removeSwapFile(swapFile);
+        if (!successful)
+        {
+            // Assuming permission denied when modifying the swap file
+            testConfigFileError(ConfigFileEditor::NoPermission, swapFile);
+        }
+        else
+            finished = false;
+    }
+
     if (finished)
     {
         QMap<int, bool>::const_iterator i;
@@ -633,5 +709,20 @@ void ConfigCollectionPrivate::onUpdatingBootFinished()
 {
     Q_Q(ConfigCollection);
     emit q->promptNeedReboot();
+    doUpdating();
+}
+
+void ConfigCollectionPrivate::onFinishedMakingSwapfile()
+{
+    swapConfig.turnOnSwap(SPANDA_CONFIG_FILE_SWAPFILE_ROOT);
+}
+
+void ConfigCollectionPrivate::onFinishedRemovingSwapfile()
+{
+    doUpdating();
+}
+
+void ConfigCollectionPrivate::onFinishedTurnOnSwap()
+{
     doUpdating();
 }

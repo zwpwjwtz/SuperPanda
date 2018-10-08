@@ -45,3 +45,15 @@ void DialogUtils::warnExecPermission(QString objectName)
                                   "right permission to do it.")
                                  ).arg(objectName));
 }
+
+void DialogUtils::warnInsufficientSpace(QString path, qint64 requiredSpace)
+{
+    requiredSpace /= 1024 * 1024; // Use MiB as readable unit
+    QMessageBox::critical(nullptr, tr("Insufficient Space"),
+                          QString(tr("One or more operation failed due to "
+                                     "insufficient space of directory %1.\n"
+                                     "Please make sure that it has at least "
+                                     "%2 MB free space."))
+                                 .arg(path)
+                                 .arg(QString::number(requiredSpace)));
+}

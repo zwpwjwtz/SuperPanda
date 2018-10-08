@@ -17,7 +17,8 @@
 #define SPANDA_MGCKF_CONFIG_APP_ENV_SYS 9
 #define SPANDA_MGCKF_CONFIG_APP_ENV_USER 10
 #define SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME 11
-#define SPANDA_MGCKF_CONFIG_DISP_RESOLUTION 12
+#define SPANDA_MGCKF_CONFIG_DISP_RESOLUTION 13
+#define SPANDA_MGCKF_CONFIG_DISK_SWAP 14
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -126,9 +127,28 @@ void MagicKonfug::loadConfig()
         ui->radioCustomizedResolution->setChecked(true);
         ui->textScreenWidth->setValue(value.toSize().width());
         ui->textScreenHeight->setValue(value.toSize().height());
+        ui->textScreenWidth->setEnabled(true);
+        ui->textScreenWidth->setEnabled(true);
     }
     else
+    {
         ui->radioDefaultResolution->setChecked(true);
+        ui->textScreenWidth->setEnabled(false);
+        ui->textScreenHeight->setEnabled(false);
+    }
+
+    value = configEditor.getValue(ConfigCollection::CONFIG_DISK_SWAP);
+    if (value.toInt() > 0)
+    {
+        ui->radioEnableSwap->setChecked(true);
+        ui->textSwapSize->setValue(value.toInt());
+        ui->textSwapSize->setEnabled(true);
+    }
+    else
+    {
+        ui->radioDisableSwap->setChecked(true);
+        ui->textSwapSize->setEnabled(false);
+    }
 
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
@@ -205,6 +225,13 @@ bool MagicKonfug::applyConfig(int configIndex)
                                                resolution);
             break;
         }
+        case SPANDA_MGCKF_CONFIG_DISK_SWAP:
+            if (ui->radioEnableSwap->isChecked())
+                successful = configEditor.setValue(Key::CONFIG_DISK_SWAP,
+                                                   ui->textSwapSize->value());
+            else
+                successful = configEditor.setValue(Key::CONFIG_DISK_SWAP, 0);
+            break;
         default:;
     }
     return successful;
@@ -251,6 +278,7 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
 
         // Disk
         case SPANDA_MGCKF_CONFIG_DISK_PHYSICS:
+        case SPANDA_MGCKF_CONFIG_DISK_SWAP:
             setConfigPageModified(5, modified);
             break;
         default:;
@@ -499,6 +527,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 break;
             case 5: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISK_SWAP);
                 break;
             default:;
         }
@@ -609,4 +638,22 @@ void MagicKonfug::on_textScreenHeight_valueChanged(int arg1)
 {
     Q_UNUSED(arg1)
     setConfigModified(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
+}
+
+void MagicKonfug::on_radioDisableSwap_clicked()
+{
+    ui->textSwapSize->setEnabled(false);
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISK_SWAP);
+}
+
+void MagicKonfug::on_radioEnableSwap_clicked()
+{
+    ui->textSwapSize->setEnabled(true);
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISK_SWAP);
+}
+
+void MagicKonfug::on_textSwapSize_valueChanged(int arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISK_SWAP);
 }

@@ -14,4 +14,6 @@
 #define SPANDA_CONFIG_FILE_AUTOSTART_USER "~/.config/autostart/" \
                                           "spanda_set_resolution.desktop"
 
+#define SPANDA_CONFIG_FILE_SWAPFILE_ROOT "/swapfile"
+
 #endif // CONFIG_FILES_H

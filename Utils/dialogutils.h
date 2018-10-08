@@ -14,6 +14,7 @@ public:
     static void warnMissingFile(QString fileName, bool aborted = false);
     static void warnPermission(QString objectName);
     static void warnExecPermission(QString objectName);
+    static void warnInsufficientSpace(QString path, qint64 requiredSpace);
 };
 
 #endif // DIALOGUTILS_H

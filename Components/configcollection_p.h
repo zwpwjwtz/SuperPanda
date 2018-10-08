@@ -7,6 +7,7 @@
 #include "../Interfaces/exelauncher.h"
 #include "../Utils/gsettingseditor.h"
 #include "../Utils/bootutils.h"
+#include "../Utils/swaputils.h"
 
 
 class ConfigCollection;
@@ -22,11 +23,13 @@ public:
     QMap<int, QVariant> configList;
     QMap<int, bool> configModified;
     BootUtils bootConfig;
+    SwapUtils swapConfig;
     ConfigFileEditor configFile;
     ExeLauncher exeFile;
     bool needResetScreen;
+    bool needResetSwapFile;
     bool needUpdatingBoot;
-    static const int MaxConfigEntry = 13;
+    static const int MaxConfigEntry = 14;
 
     ConfigCollectionPrivate(ConfigCollection* parent);
     void doUpdating();
@@ -37,6 +40,9 @@ public:
 
 protected slots:
     void onUpdatingBootFinished();
+    void onFinishedMakingSwapfile();
+    void onFinishedRemovingSwapfile();
+    void onFinishedTurnOnSwap();
 };
 
 #endif // CONFIGCOLLECTION_P_H
