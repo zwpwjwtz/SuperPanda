@@ -52,7 +52,8 @@ SOURCES +=\
     Utils/gsettingseditor.cpp \
     Components/configcollection.cpp \
     Utils/screenutils.cpp \
-    Utils/swaputils.cpp
+    Utils/swaputils.cpp \
+    Components/tedyguard.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -81,12 +82,14 @@ HEADERS  += \
     Components/config_files.h \
     Components/config_gconf.h \
     Utils/screenutils.h \
-    Utils/swaputils.h
+    Utils/swaputils.h \
+    Components/tedyguard.h
 
 FORMS    += \
     Components/magickonfug.ui \
     mainwindow.ui \
-    aboutwindow.ui
+    aboutwindow.ui \
+    Components/tedyguard.ui
 
 RESOURCES += \
     icons.qrc \

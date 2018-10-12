@@ -5,6 +5,7 @@
 #include "global.h"
 #include "aboutwindow.h"
 #include "Components/magickonfug.h"
+#include "Components/tedyguard.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -33,6 +34,13 @@ void MainWindow::on_toolButton_2_clicked()
     if (!windowMgckf)
         windowMgckf = new MagicKonfug;
     windowMgckf->show();
+}
+
+void MainWindow::on_toolButton_3_clicked()
+{
+    if (!windowTdgrd)
+        windowTdgrd = new TedyGuard;
+    windowTdgrd->show();
 }
 
 void MainWindow::on_comboBox_currentIndexChanged(int index)

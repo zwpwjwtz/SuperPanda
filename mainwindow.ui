@@ -122,6 +122,33 @@ MagiKonfug</string>
           <iconset resource="icons.qrc">
            <normaloff>:/Icons/Icons/configure.png</normaloff>:/Icons/Icons/configure.png</iconset>
          </property>
+         <property name="iconSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="toolButtonStyle">
+          <enum>Qt::ToolButtonTextUnderIcon</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QToolButton" name="toolButton_3">
+         <property name="text">
+          <string>SuperPanda
+TedyGuard</string>
+         </property>
+         <property name="icon">
+          <iconset resource="icons.qrc">
+           <normaloff>:/Icons/Icons/cleaner.png</normaloff>:/Icons/Icons/cleaner.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
          <property name="toolButtonStyle">
           <enum>Qt::ToolButtonTextUnderIcon</enum>
          </property>

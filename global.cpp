@@ -4,6 +4,7 @@
 
 // Global object definitions
 MagicKonfug* windowMgckf = nullptr;
+TedyGuard* windowTdgrd = nullptr;
 AboutWindow* windowAbout = nullptr;
 QTranslator appTranslator;
 

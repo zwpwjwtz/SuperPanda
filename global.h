@@ -6,9 +6,11 @@
 
 // Global object declarations
 class MagicKonfug;
+class TedyGuard;
 class AboutWindow;
 
 extern MagicKonfug* windowMgckf;
+extern TedyGuard* windowTdgrd;
 extern AboutWindow* windowAbout;
 extern QTranslator appTranslator;
 

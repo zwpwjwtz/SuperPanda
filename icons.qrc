@@ -5,5 +5,6 @@
         <file>Icons/help.png</file>
         <file>Icons/configure.png</file>
         <file>Icons/SuperPanda.png</file>
+        <file>Icons/cleaner.png</file>
     </qresource>
 </RCC>
