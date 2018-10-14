@@ -2,6 +2,7 @@
 #define TEDYGUARD_H
 
 #include <QMainWindow>
+#include "filecleaner.h"
 
 
 namespace Ui {
@@ -18,12 +19,18 @@ public:
 
 private:
     Ui::TedyGuard *ui;
+    FileCleaner cleaner;
+    int currentState;
 
 private slots:
+    void onCleanerScanFinished();
+    void onCleanerCleaningFinished();
+
     void on_buttonScan_clicked();
     void on_buttonStopScan_clicked();
     void on_buttonCancelClean_clicked();
-    void on_buttoStopClean_clicked();
+    void on_buttonClean_clicked();
+    void on_buttonStopClean_clicked();
     void on_buttonReturn_clicked();
 };
 

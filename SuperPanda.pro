@@ -53,7 +53,9 @@ SOURCES +=\
     Components/configcollection.cpp \
     Utils/screenutils.cpp \
     Utils/swaputils.cpp \
-    Components/tedyguard.cpp
+    Components/tedyguard.cpp \
+    Components/filecleaner.cpp \
+    Components/filecleanerworker.cpp
 
 HEADERS  += \
     Interfaces/configfileeditor.h \
@@ -83,7 +85,10 @@ HEADERS  += \
     Components/config_gconf.h \
     Utils/screenutils.h \
     Utils/swaputils.h \
-    Components/tedyguard.h
+    Components/tedyguard.h \
+    Components/filecleaner.h \
+    Components/filecleaner_p.h \
+    Components/filecleanerworker.h
 
 FORMS    += \
     Components/magickonfug.ui \

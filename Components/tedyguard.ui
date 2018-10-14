@@ -96,7 +96,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,0">
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="labelScanState">
             <property name="text">
              <string>Scanning, please wait...</string>
             </property>
@@ -108,14 +108,14 @@
           <item>
            <widget class="QPushButton" name="buttonStopScan">
             <property name="text">
-             <string>Stop</string>
+             <string/>
             </property>
            </widget>
           </item>
          </layout>
         </item>
         <item>
-         <widget class="QProgressBar" name="progressBar">
+         <widget class="QProgressBar" name="progressScan">
           <property name="value">
            <number>0</number>
           </property>
@@ -158,6 +158,13 @@
           </column>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="buttonClean">
+          <property name="text">
+           <string>Do cleaning!</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="pageCleanStatus">
@@ -165,7 +172,7 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="10,0">
           <item>
-           <widget class="QLabel" name="label_4">
+           <widget class="QLabel" name="labelCleanState">
             <property name="text">
              <string>Cleaning, please wait...</string>
             </property>
@@ -175,16 +182,16 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="buttoStopClean">
+           <widget class="QPushButton" name="buttonStopClean">
             <property name="text">
-             <string>Stop</string>
+             <string/>
             </property>
            </widget>
           </item>
          </layout>
         </item>
         <item>
-         <widget class="QProgressBar" name="progressBar_2">
+         <widget class="QProgressBar" name="progressClean">
           <property name="value">
            <number>0</number>
           </property>
