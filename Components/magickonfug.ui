@@ -282,7 +282,7 @@
              <x>0</x>
              <y>0</y>
              <width>301</width>
-             <height>111</height>
+             <height>101</height>
             </rect>
            </property>
            <property name="title">
@@ -322,7 +322,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>110</y>
+             <y>100</y>
              <width>301</width>
              <height>101</height>
             </rect>
@@ -336,7 +336,7 @@
               <x>30</x>
               <y>30</y>
               <width>261</width>
-              <height>71</height>
+              <height>61</height>
              </rect>
             </property>
             <property name="text">
@@ -359,6 +359,65 @@
              <string/>
             </property>
             <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QGroupBox" name="groupBox_9">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>200</y>
+             <width>300</width>
+             <height>91</height>
+            </rect>
+           </property>
+           <property name="title">
+            <string>ACPI</string>
+           </property>
+           <widget class="QComboBox" name="comboACPIos">
+            <property name="geometry">
+             <rect>
+              <x>170</x>
+              <y>40</y>
+              <width>121</width>
+              <height>38</height>
+             </rect>
+            </property>
+            <item>
+             <property name="text">
+              <string>Default</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Disabled</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Linux</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Windows</string>
+             </property>
+            </item>
+           </widget>
+           <widget class="QLabel" name="label_18">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>30</y>
+              <width>161</width>
+              <height>51</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Expose OS type to BIOS:</string>
+            </property>
+            <property name="wordWrap">
              <bool>true</bool>
             </property>
            </widget>

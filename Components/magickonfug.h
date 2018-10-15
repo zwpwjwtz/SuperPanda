@@ -86,6 +86,7 @@ private slots:
     void on_radioDisableSwap_clicked();
     void on_radioEnableSwap_clicked();
     void on_textSwapSize_valueChanged(int arg1);
+    void on_comboACPIos_currentIndexChanged(int index);
 };
 
 #endif // MagicKonfug_H

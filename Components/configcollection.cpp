@@ -345,6 +345,39 @@ bool ConfigCollection::applyConfig()
                 successful = d->testConfigFileError(errCode, fileName);
                 d->needResetSwapFile = successful;
                 break;
+            case  CONFIG_ACPI_OS:
+                fileName = SPANDA_CONFIG_FILE_GRUB_DEFAULT;
+                d->configFile.backupFile(fileName, backupName);
+                switch (i.value().toInt())
+                {
+                    case 1: // Disabled
+                        configValue = " acpi_osi=!";
+                        break;
+                    case 2: // Linux
+                        configValue = " acpi_osi=Linux";
+                        break;
+                    case 3: // Windows
+                        configValue = " acpi_osi=Windows";
+                        break;
+                    case 0:
+                    default:
+                        configValue.clear();
+
+                }
+                d->configFile.exists(fileName, "acpi_osi=", valueExists);
+                if (valueExists)
+                    errCode = d->configFile.regexpReplaceLine(fileName,
+                                                "GRUB_CMDLINE_LINUX_DEFAULT=",
+                                                "\\s*acpi_osi=!?\\w*",
+                                                configValue);
+                else
+                    errCode = d->configFile.regexpReplaceLine(fileName,
+                                                "GRUB_CMDLINE_LINUX_DEFAULT=",
+                                                "\"\\n",
+                                                configValue.append("\"\n"));
+                successful = d->testConfigFileError(errCode, fileName);
+                d->needUpdatingBoot = successful;
+                break;
             default:;
         }
         if (successful)
@@ -499,6 +532,21 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
         case CONFIG_DISK_SWAP:
             value = d->configFile.fileSize(SPANDA_CONFIG_FILE_SWAPFILE_ROOT)
                                  / 1024 / 1024;
+            break;
+        case CONFIG_ACPI_OS:
+            value = 0;
+            errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_GRUB_DEFAULT,
+                                             "acpi_osi=",
+                                             configValue);
+            if (errCode == ConfigFileEditor::FileOk)
+            {
+                if (configValue.contains("=Linux"))
+                    value = 2;
+                else if (configValue.contains("=Windows"))
+                    value = 3;
+                else if (configValue.contains("acpi_osi=!"))
+                    value = 1;
+            }
             break;
         default:;
     }

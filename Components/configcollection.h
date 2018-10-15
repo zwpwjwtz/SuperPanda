@@ -28,7 +28,8 @@ public:
         CONFIG_DISP_SCALE_GNOME_WINDOW = 11,
         CONFIG_DISP_SCALE_GNOME_TEXT = 12,
         CONFIG_DISP_RESOLUTION = 13,
-        CONFIG_DISK_SWAP = 14
+        CONFIG_DISK_SWAP = 14,
+        CONFIG_ACPI_OS = 15
     };
 
     explicit ConfigCollection();

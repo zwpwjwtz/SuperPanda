@@ -29,7 +29,7 @@ public:
     bool needResetScreen;
     bool needResetSwapFile;
     bool needUpdatingBoot;
-    static const int MaxConfigEntry = 14;
+    static const int MaxConfigEntry = 15;
 
     ConfigCollectionPrivate(ConfigCollection* parent);
     void doUpdating();

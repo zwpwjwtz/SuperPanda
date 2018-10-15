@@ -19,6 +19,7 @@
 #define SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME 11
 #define SPANDA_MGCKF_CONFIG_DISP_RESOLUTION 13
 #define SPANDA_MGCKF_CONFIG_DISK_SWAP 14
+#define SPANDA_MGCKF_CONFIG_ACPI_OS 15
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -150,6 +151,9 @@ void MagicKonfug::loadConfig()
         ui->textSwapSize->setEnabled(false);
     }
 
+    value = configEditor.getValue(ConfigCollection::CONFIG_ACPI_OS);
+    ui->comboACPIos->setCurrentIndex(value.toInt());
+
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
     ui->buttonBox->setEnabled(false);
@@ -232,6 +236,10 @@ bool MagicKonfug::applyConfig(int configIndex)
             else
                 successful = configEditor.setValue(Key::CONFIG_DISK_SWAP, 0);
             break;
+        case SPANDA_MGCKF_CONFIG_ACPI_OS:
+            successful = configEditor.setValue(Key::CONFIG_ACPI_OS,
+                                               ui->comboACPIos->currentIndex());
+            break;
         default:;
     }
     return successful;
@@ -254,6 +262,7 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
         // Hardware
         case SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO:
         case SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n:
+        case SPANDA_MGCKF_CONFIG_ACPI_OS:
             setConfigPageModified(1, modified);
             break;
 
@@ -509,6 +518,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
             case 1: // Hardware
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_CPU_INTEL_TURBO);
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_WIFI_INTEL_80211n);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_ACPI_OS);
                 break;
             case 2: // Service
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_SERVICE_TIMEOUT);
@@ -656,4 +666,10 @@ void MagicKonfug::on_textSwapSize_valueChanged(int arg1)
 {
     Q_UNUSED(arg1)
     setConfigModified(SPANDA_MGCKF_CONFIG_DISK_SWAP);
+}
+
+void MagicKonfug::on_comboACPIos_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    setConfigModified(SPANDA_MGCKF_CONFIG_ACPI_OS);
 }
