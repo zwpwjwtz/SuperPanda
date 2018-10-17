@@ -29,7 +29,8 @@ public:
         CONFIG_DISP_SCALE_GNOME_TEXT = 12,
         CONFIG_DISP_RESOLUTION = 13,
         CONFIG_DISK_SWAP = 14,
-        CONFIG_ACPI_OS = 15
+        CONFIG_ACPI_OS = 15,
+        CONFIG_DISP_GAMMA = 16
     };
 
     explicit ConfigCollection();
@@ -37,6 +38,7 @@ public:
     bool applyConfig();
 
     QVariant getValue(ConfigEntryKey key);
+    QVariant getDefaultValue(ConfigEntryKey key);
     bool setValue(ConfigEntryKey key, QVariant value);
     void resetValue(ConfigEntryKey key);
     bool isModified(ConfigEntryKey key);

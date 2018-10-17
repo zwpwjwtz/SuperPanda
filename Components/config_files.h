@@ -11,8 +11,8 @@
 #define SPANDA_CONFIG_FILE_ENVIRONMENT_SYS "/etc/environment"
 #define SPANDA_CONFIG_FILE_ENVIRONMENT_USER "~/.xsessionrc"
 #define SPANDA_CONFIG_FILE_XSESSION_USER "~/.xsession"
-#define SPANDA_CONFIG_FILE_AUTOSTART_USER "~/.config/autostart/" \
-                                          "spanda_set_resolution.desktop"
+#define SPANDA_CONFIG_FILE_AUTOSTART_SCREEN_USER "~/.config/autostart/" \
+                                            "spanda-screen-config.desktop"
 
 #define SPANDA_CONFIG_FILE_SWAPFILE_ROOT "/swapfile"
 

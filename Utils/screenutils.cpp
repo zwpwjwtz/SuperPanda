@@ -8,6 +8,11 @@
 #define SPANDA_SCREEN_EXEC_XRANDR_ADDMODE "--addmode"
 #define SPANDA_SCREEN_EXEC_XRANDR_OUTPUT "--output"
 #define SPANDA_SCREEN_EXEC_XRANDR_MODE "--mode"
+#define SPANDA_SCREEN_EXEC_XGAMMA "xgamma"
+#define SPANDA_SCREEN_EXEC_XGAMMA_SCREEN "-s"
+#define SPANDA_SCREEN_EXEC_XGAMMA_RED "-rgamma"
+#define SPANDA_SCREEN_EXEC_XGAMMA_GREEN "-ggamma"
+#define SPANDA_SCREEN_EXEC_XGAMMA_BLUE "-bgamma"
 
 
 ScreenUtils::ScreenUtils()
@@ -88,6 +93,38 @@ QSize ScreenUtils::currentResolution(QString monitor)
     return resolution;
 }
 
+QList<double> ScreenUtils::currentGamma(QString monitor)
+{
+    QProcess exe;
+    if (monitor.isEmpty())
+        exe.start(SPANDA_SCREEN_EXEC_XGAMMA);
+    else
+        exe.start(QString("%1 %2 %3")
+                         .arg(SPANDA_SCREEN_EXEC_XGAMMA)
+                         .arg(SPANDA_SCREEN_EXEC_XGAMMA_SCREEN)
+                         .arg(monitor));
+    exe.waitForFinished();
+
+    // Assuming the first line of the output looks like this:
+    // -> Red  0.950, Green  0.900, Blue  0.850
+    // Note: The output of xgamma command is redirected to STDERROR!
+    QList<QByteArray> output = exe.readAllStandardError().split('\n');
+    QList<double> gammaComponent;
+    QList<QByteArray> tempLine;
+    int i, p;
+    if (output.count() > 0)
+    {
+        tempLine = output[0].replace("-> ", "").split(',');
+        for (i=0; i<tempLine.count(); i++)
+        {
+            p = tempLine[i].lastIndexOf(' ') + 1;
+            if (p < tempLine[i].length())
+                gammaComponent.push_back(tempLine[i].mid(p).toDouble());
+        }
+    }
+    return gammaComponent;
+}
+
 QString ScreenUtils::getModeLine(QSize resolution, int refreshRate)
 {
     QString refreshRateString;
@@ -150,6 +187,28 @@ bool ScreenUtils::setMode(QString monitor,
                      .arg(monitor)
                      .arg(SPANDA_SCREEN_EXEC_XRANDR_MODE)
                      .arg(modeName));
+    exe.waitForFinished();
+    return (exe.exitCode() == 0);
+}
+
+bool ScreenUtils::setGamma(QString monitor,
+                           double red, double green, double blue)
+{
+    QList<QString> args;
+    if (!monitor.isEmpty())
+    {
+        args.push_back(SPANDA_SCREEN_EXEC_XGAMMA_SCREEN);
+        args.push_back(monitor);
+    }
+    args.push_back(SPANDA_SCREEN_EXEC_XGAMMA_RED);
+    args.push_back(QString::number(red));
+    args.push_back(SPANDA_SCREEN_EXEC_XGAMMA_GREEN);
+    args.push_back(QString::number(green));
+    args.push_back(SPANDA_SCREEN_EXEC_XGAMMA_BLUE);
+    args.push_back(QString::number(blue));
+
+    QProcess exe;
+    exe.start(SPANDA_SCREEN_EXEC_XGAMMA, args);
     exe.waitForFinished();
     return (exe.exitCode() == 0);
 }

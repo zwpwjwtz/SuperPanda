@@ -20,6 +20,7 @@
 #define SPANDA_MGCKF_CONFIG_DISP_RESOLUTION 13
 #define SPANDA_MGCKF_CONFIG_DISK_SWAP 14
 #define SPANDA_MGCKF_CONFIG_ACPI_OS 15
+#define SPANDA_MGCKF_CONFIG_DISP_GAMMA 16
 
 
 MagicKonfug::MagicKonfug(QWidget *parent) :
@@ -95,7 +96,7 @@ void MagicKonfug::loadConfig()
     ui->comboKeySequence->setCurrentIndex(value.toInt());
 
     value = configEditor.getValue(ConfigCollection::CONFIG_KEYBD_COMPOSE);
-    if (value.isValid())
+    if (value.toString() != "unavailable")
         ui->comboKeySequence->setCurrentIndex(
                                 composeKeyStringToIndex(value.toString()));
     else
@@ -129,7 +130,7 @@ void MagicKonfug::loadConfig()
         ui->textScreenWidth->setValue(value.toSize().width());
         ui->textScreenHeight->setValue(value.toSize().height());
         ui->textScreenWidth->setEnabled(true);
-        ui->textScreenWidth->setEnabled(true);
+        ui->textScreenHeight->setEnabled(true);
     }
     else
     {
@@ -153,6 +154,15 @@ void MagicKonfug::loadConfig()
 
     value = configEditor.getValue(ConfigCollection::CONFIG_ACPI_OS);
     ui->comboACPIos->setCurrentIndex(value.toInt());
+
+    value = configEditor.getValue(ConfigCollection::CONFIG_DISP_GAMMA);
+    QList<QString> valueList = value.toString().split(',');
+    if (valueList.count() >= 3)
+    {
+        ui->textGammaRed->setValue(valueList[0].toDouble());
+        ui->textGammaGreen->setValue(valueList[1].toDouble());
+        ui->textGammaBlue->setValue(valueList[2].toDouble());
+    }
 
     for (int i=0; i<pageGroupCount; i++)
         configPageMoidified[i] = false;
@@ -240,6 +250,16 @@ bool MagicKonfug::applyConfig(int configIndex)
             successful = configEditor.setValue(Key::CONFIG_ACPI_OS,
                                                ui->comboACPIos->currentIndex());
             break;
+        case SPANDA_MGCKF_CONFIG_DISP_GAMMA:
+        {
+            QList<QString> gamma;
+            gamma.push_back(QString::number(ui->textGammaRed->value()));
+            gamma.push_back(QString::number(ui->textGammaGreen->value()));
+            gamma.push_back(QString::number(ui->textGammaBlue->value()));
+            successful = configEditor.setValue(Key::CONFIG_DISP_GAMMA,
+                                               gamma.join(','));
+            break;
+        }
         default:;
     }
     return successful;
@@ -282,6 +302,7 @@ void MagicKonfug::setConfigModified(int configIndex, bool modified)
         case SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE:
         case SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME:
         case SPANDA_MGCKF_CONFIG_DISP_RESOLUTION:
+        case SPANDA_MGCKF_CONFIG_DISP_GAMMA:
             setConfigPageModified(4, modified);
             break;
 
@@ -534,6 +555,7 @@ void MagicKonfug::on_buttonBox_clicked(QAbstractButton *button)
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_KEYBD_COMPOSE);
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_SCALE_GNOME);
                 applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_RESOLUTION);
+                applied &= applyConfig(SPANDA_MGCKF_CONFIG_DISP_GAMMA);
                 break;
             case 5: // Disk
                 applied = applyConfig(SPANDA_MGCKF_CONFIG_DISK_PHYSICS);
@@ -672,4 +694,22 @@ void MagicKonfug::on_comboACPIos_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     setConfigModified(SPANDA_MGCKF_CONFIG_ACPI_OS);
+}
+
+void MagicKonfug::on_textGammaRed_valueChanged(double arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_GAMMA);
+}
+
+void MagicKonfug::on_textGammaGreen_valueChanged(double arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_GAMMA);
+}
+
+void MagicKonfug::on_textGammaBlue_valueChanged(double arg1)
+{
+    Q_UNUSED(arg1)
+    setConfigModified(SPANDA_MGCKF_CONFIG_DISP_GAMMA);
 }

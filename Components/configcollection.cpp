@@ -259,57 +259,57 @@ bool ConfigCollection::applyConfig()
                 successful = true;
                 break;
             case CONFIG_DISP_RESOLUTION:
-                fileName = SPANDA_CONFIG_FILE_AUTOSTART_USER;
+                fileName = SPANDA_CONFIG_FILE_AUTOSTART_SCREEN_USER;
                 if (i.value().toSize().isValid())
                 {
-                    configValue = ScreenUtils::getModeLine(i.value().toSize());
                     if (!d->configFile.fileExists(fileName))
                     {
                         d->configFile.append(fileName,
                                              "[Desktop Entry]\n"
                                              "Exec=bash -c \". ~/.xsession\"\n"
-                                             "Name=SuperPanda-SetResolution\n"
+                                             "Name=SuperPanda-ScreenConfig\n"
                                              "Type=Application");
                     }
 
                     fileName = SPANDA_CONFIG_FILE_XSESSION_USER;
+                    configValue = ScreenUtils::getModeLine(i.value().toSize());
+                    configValue = QString("xrandr --newmode %1\n"
+                                          "xrandr --addmode %2 %3\n"
+                                          "xrandr --output %2 --mode %3")
+                                  .arg(configValue)
+                                  .arg(ScreenUtils::currentMonitor())
+                                  .arg(ScreenUtils::getModeName(configValue));
                     if (!d->configFile.fileExists(fileName))
                     {
-                        errCode = d->configFile.append(fileName,
-                                    QString("xrandr --newmode %1\n"
-                                            "xrandr --addmode %2 %3\n"
-                                            "xrandr --output %2 --mode %3")
-                                    .arg(configValue)
-                                    .arg(ScreenUtils::currentMonitor())
-                                    .arg(ScreenUtils::getModeName(configValue)));
+                        errCode = d->configFile.append(fileName, configValue);
                     }
                     else
                     {
+                        tempStringList = configValue.split('\n');
                         errCode = d->configFile.replaceLine(fileName,
-                                    "xrandr --newmode ",
-                                    QString("xrandr --newmode %1\n")
-                                           .arg(configValue));
+                                                "xrandr --newmode ",
+                                                tempStringList[0].append('\n'));
                         errCode = d->configFile.replaceLine(fileName,
-                                    "xrandr --addmode ",
-                                    QString("xrandr --addmode %1 %2\n")
-                                           .arg(ScreenUtils::currentMonitor())
-                                           .arg(ScreenUtils::getModeName(
-                                                                configValue)));
+                                                "xrandr --addmode ",
+                                                tempStringList[1].append('\n'));
                         errCode = d->configFile.replaceLine(fileName,
-                                    "xrandr --output ",
-                                    QString("xrandr --output %2 --mode %3\n")
-                                           .arg(ScreenUtils::currentMonitor())
-                                           .arg(ScreenUtils::getModeName(
-                                                                configValue)));
+                                                "xrandr --output ",
+                                                tempStringList[2].append('\n'));
                     }
                     successful = d->testConfigFileError(errCode, fileName);
                 }
                 else
                 {
-                    errCode = d->configFile.deleteFile(fileName);
+                    if (!d->configList[CONFIG_DISP_GAMMA].isValid())
+                        d->configFile.deleteFile(fileName);
+
+                    fileName = SPANDA_CONFIG_FILE_XSESSION_USER;
+                    errCode = d->configFile.replaceLine(fileName,
+                                                        "xrandr --output ",
+                                                        "");
                     successful = d->testConfigFileError(errCode, fileName);
                 }
-                d->needResetScreen = successful;
+                d->needResetScreen |= successful;
                 break;
             case CONFIG_DISK_SWAP:
                 if (i.value().toInt() > 0)
@@ -378,6 +378,51 @@ bool ConfigCollection::applyConfig()
                 successful = d->testConfigFileError(errCode, fileName);
                 d->needUpdatingBoot = successful;
                 break;
+            case CONFIG_DISP_GAMMA:
+                fileName = SPANDA_CONFIG_FILE_AUTOSTART_SCREEN_USER;
+                tempStringList = i.value().toString().split(',');
+                if (tempStringList.count() >= 3)
+                {
+                    if (!d->configFile.fileExists(fileName))
+                    {
+                        d->configFile.append(fileName,
+                                             "[Desktop Entry]\n"
+                                             "Exec=bash -c \". ~/.xsession\"\n"
+                                             "Name=SuperPanda-ScreenConfig\n"
+                                             "Type=Application");
+                    }
+
+                    fileName = SPANDA_CONFIG_FILE_XSESSION_USER;
+                    configValue = QString("xgamma "
+                                          "-rgamma %1 -ggamma %2 -bgamma %3\n")
+                                         .arg(tempStringList[0])
+                                         .arg(tempStringList[1])
+                                         .arg(tempStringList[2]);
+                    if (!d->configFile.fileExists(fileName))
+                    {
+                        errCode = d->configFile.append(fileName, configValue);
+                    }
+                    else
+                    {
+                        errCode = d->configFile.replaceLine(fileName,
+                                                            "xgamma -rgamma ",
+                                                            configValue);
+                    }
+                    successful = d->testConfigFileError(errCode, fileName);
+                }
+                else
+                {
+                    if (!d->configList[CONFIG_DISP_RESOLUTION].isValid())
+                        d->configFile.deleteFile(fileName);
+
+                    fileName = SPANDA_CONFIG_FILE_XSESSION_USER;
+                    errCode = d->configFile.replaceLine(fileName,
+                                                        "xgamma -rgamma ",
+                                                        "");
+                    successful = d->testConfigFileError(errCode, fileName);
+                }
+                d->needResetScreen |= successful;
+                break;
             default:;
         }
         if (successful)
@@ -390,7 +435,47 @@ bool ConfigCollection::applyConfig()
 QVariant ConfigCollection::getValue(ConfigEntryKey key)
 {
     Q_D(ConfigCollection);
-    return d->configList.value(int(key));
+    if (d->configList.value(int(key)).isValid())
+        return d->configList.value(int(key));
+    else
+        return getDefaultValue(key);
+}
+
+QVariant ConfigCollection::getDefaultValue(ConfigEntryKey key)
+{
+    switch(key)
+    {
+        case CONFIG_SERVICE_TIMEOUT:
+            return 10;
+        case CONFIG_SHUTDOWN_TIMEOUT:
+            return 30;
+        case CONFIG_CPU_INTEL_TURBO:
+            return false;
+        case CONFIG_KEYBD_COMPOSE:
+            return QString();
+        case CONFIG_DISK_PHYSICS:
+            return 0;
+        case CONFIG_BOOT_TIMEOUT:
+            return 10;
+        case CONFIG_BOOT_RESOLUTION:
+            return QString();
+        case CONFIG_WIFI_INTEL_80211n:
+            return true;
+        case CONFIG_DISP_SCALE_GNOME_WINDOW:
+            return 1;
+        case CONFIG_DISP_SCALE_GNOME_TEXT:
+            return 1.0;
+        case CONFIG_DISP_RESOLUTION:
+            return QSize();
+        case CONFIG_DISK_SWAP:
+            return 0;
+        case CONFIG_ACPI_OS:
+            return 0;
+        case CONFIG_DISP_GAMMA:
+            return QString("1,1,1");
+        default:
+            return QVariant();
+    }
 }
 
 bool ConfigCollection::setValue(ConfigEntryKey key, QVariant value)
@@ -398,9 +483,12 @@ bool ConfigCollection::setValue(ConfigEntryKey key, QVariant value)
     Q_D(ConfigCollection);
     if (!d->configList.contains(key))
         resetValue(key);
-    if (d->configList.value(key) != value)
+    if (getValue(key) != value)
     {
-        d->configList[int(key)] = value;
+        if (getDefaultValue(key) == value)
+            d->configList[int(key)] = QVariant();
+        else
+            d->configList[int(key)] = value;
         d->configModified[int(key)] = true;
     }
     return true;
@@ -417,7 +505,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
     switch(key)
     {
         case CONFIG_SERVICE_TIMEOUT:
-            value = 10;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_SYSTEMD_SYSTEM,
                                           "DefaultTimeoutStartSec=",
                                           configValue);
@@ -429,7 +516,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_SHUTDOWN_TIMEOUT:
-            value = 30;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_SYSTEMD_SYSTEM,
                                           "ShutdownWatchdogSec=",
                                           configValue);
@@ -441,7 +527,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_CPU_INTEL_TURBO:
-            value = false;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_GRUB_DEFAULT,
                                           "intel_pstate=enable",
                                           configValue);
@@ -450,8 +535,10 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             break;
         case CONFIG_KEYBD_COMPOSE:
             if (!d->configFile.fileExists(SPANDA_CONFIG_FILE_KEYBD_DEFAULT))
+            {
+                value = "unavailable";
                 break;
-            value = QString();
+            }
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_KEYBD_DEFAULT,
                                           "XKBOPTIONS=",
                                           configValue);
@@ -463,7 +550,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_DISK_PHYSICS:
-            value = 0;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_UDEV_DISK,
                                           "ATTR{queue/rotational}==\"0\"",
                                           configValue);
@@ -474,7 +560,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_BOOT_TIMEOUT:
-            value = 10;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_GRUB_DEFAULT,
                                           "GRUB_TIMEOUT=",
                                           configValue);
@@ -485,7 +570,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_BOOT_RESOLUTION:
-            value = QString();
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_GRUB_DEFAULT,
                                           "GRUB_GFXMODE=",
                                           configValue);
@@ -496,7 +580,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
             }
             break;
         case CONFIG_WIFI_INTEL_80211n:
-            value = true;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_MODCONF_IWLWIFI,
                                           "11n_disable=",
                                           configValue);
@@ -521,9 +604,14 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                                                   SPANDA_CONFIG_GCONF_KEY_GNOME_TEXTSCALING);
             break;
         case CONFIG_DISP_RESOLUTION:
-            value = QSize();
-            if (d->configFile.fileExists(SPANDA_CONFIG_FILE_AUTOSTART_USER))
+            if (d->configFile.fileExists(SPANDA_CONFIG_FILE_AUTOSTART_SCREEN_USER))
             {
+                d->configFile.findLine(SPANDA_CONFIG_FILE_XSESSION_USER,
+                                       "xrandr --output",
+                                       configValue);
+                if (configValue.isEmpty())
+                    break;
+
                 // Assuming user do not change resolution manually, so that
                 // current resolution is exactly the one defined in config file
                 value = ScreenUtils::currentResolution();
@@ -534,7 +622,6 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                                  / 1024 / 1024;
             break;
         case CONFIG_ACPI_OS:
-            value = 0;
             errCode = d->configFile.findLine(SPANDA_CONFIG_FILE_GRUB_DEFAULT,
                                              "acpi_osi=",
                                              configValue);
@@ -548,14 +635,27 @@ void ConfigCollection::resetValue(ConfigEntryKey key)
                     value = 1;
             }
             break;
-        default:;
+        case CONFIG_DISP_GAMMA:
+            if (d->configFile.fileExists(SPANDA_CONFIG_FILE_AUTOSTART_SCREEN_USER))
+            {
+                // Assuming user do not change gamma manually, so that
+                // current resolution is exactly the one defined in config file
+                QString gammaString;
+                QList<double> gammaComponent = ScreenUtils::currentGamma();
+                for (int i=0; i<gammaComponent.count(); i++)
+                {
+                    gammaString.append(',')
+                               .append(QString::number(gammaComponent[i]));
+                }
+                value = gammaString.mid(1);
+            }
+            break;
+        default:
+            return;
     }
 
-    if (value.isValid())
-    {
-        d->configList[int(key)] = value;
-        d->configModified[int(key)] = false;
-    }
+    d->configList[int(key)] = value;
+    d->configModified[int(key)] = false;
 }
 
 bool ConfigCollection::isModified(ConfigEntryKey key)
@@ -680,6 +780,12 @@ void ConfigCollectionPrivate::doUpdating()
         QSize newResolution =
                 q->getValue(ConfigCollection::CONFIG_DISP_RESOLUTION).toSize();
         ScreenUtils::setMode(ScreenUtils::currentMonitor(), newResolution);
+        QList<QString> newGamma = q->getValue(ConfigCollection::CONFIG_DISP_GAMMA)
+                                    .toString().split(',');
+        ScreenUtils::setGamma(ScreenUtils::currentMonitor(),
+                              newGamma[0].toDouble(),
+                              newGamma[1].toDouble(),
+                              newGamma[2].toDouble());
     }
     if (needResetSwapFile)
     {
