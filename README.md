@@ -12,3 +12,8 @@ Part of the code in this project is ported from [Qt Creator Project](https://cod
 ## How To Build And Install
 
 See file [INSTALL](./INSTALL).
+
+
+## Document
+
+Technical details can be found in markdown files under [doc](./doc) directory.
